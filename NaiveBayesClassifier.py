@@ -1,4 +1,4 @@
-''' Spam Detector using a binary classifier Naive Bayes'''
+''' Multi-Class categorization vor e-payments using Naive Bayes classifier'''
 
 import os
 import numpy
@@ -9,7 +9,8 @@ from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import KFold
-from sklearn.metrics import confusion_matrix, f1_score
+from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+from sklearn.feature_extraction.text import TfidfTransformer
 
 NEWLINE = '\n'
 
@@ -19,6 +20,7 @@ FREIZEITLIFESTYLE = 'freizeitlifestyle'
 LEBENSHALTUNG = 'lebenshaltung'
 MOBILITAETVERKEHR = 'mobilitaetverkehrsmittel'
 VERSICHERUNGEN = 'versicherungen'
+WOHNENHAUSHALT = 'wohnenhaushalt'
 
 
 SOURCES = [
@@ -28,7 +30,7 @@ SOURCES = [
     ('F:\\Datasets\\Transaction-Dataset\\lebenshaltung',   LEBENSHALTUNG),
     ('F:\\Datasets\\Transaction-Dataset\\mobilitaetverkehrsmittel',     MOBILITAETVERKEHR),
     ('F:\\Datasets\\Transaction-Dataset\\versicherungen', VERSICHERUNGEN),
-    ('F:\\Datasets\\Transaction-Dataset\\wohnenhaushalt',          VERSICHERUNGEN)
+    ('F:\\Datasets\\Transaction-Dataset\\wohnenhaushalt',          WOHNENHAUSHALT)
 ]
 
 SKIP_FILES = {'cmds'}
@@ -69,8 +71,9 @@ for path, classification in SOURCES:
     data = data.append(build_data_frame(path, classification))
 
 data = data.reindex(numpy.random.permutation(data.index))
-
-# DONT USE PIPELINING
+'''
+    ##### WITHOUT PIPELINING  #####
+'''
 count_vectorizer = CountVectorizer()
 counts = count_vectorizer.fit_transform(data['text'].values)
 
@@ -83,22 +86,26 @@ classifier.fit(counts, targets)
 examples = ['versicherungen', 'dauerauftrag miete spenglerstr', 'norma', 'adac', 'nuernberger']
 example_counts = count_vectorizer.transform(examples)
 predictions = classifier.predict(example_counts)
-for prediction in predictions:
-    for example in examples:
-        print(prediction + ": " + example)
+#for prediction in predictions:
+#    for example in examples:
+#        print(prediction + ": " + example)
 print(predictions)
 
 
 '''
-# USE PIPELINING
+    ###### USE PIPELINING ####### 
+'''
 pipeline = Pipeline([
     ('count_vectorizer',   CountVectorizer(ngram_range=(1, 2))),
+    ('tfidf_transformer',  TfidfTransformer()),
     ('classifier',         MultinomialNB())
 ])
 
-k_fold = KFold(n=len(data), n_folds=4)
+# Cross validation
+k_fold = KFold(n=len(data), n_folds=6)
 scores = []
-confusion = numpy.array([[0, 0], [0, 0]])
+confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+                         [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]])
 for train_indices, test_indices in k_fold:
     train_text = data.iloc[train_indices]['text'].values
     train_y = data.iloc[train_indices]['class'].values.astype(str)
@@ -110,11 +117,11 @@ for train_indices, test_indices in k_fold:
     predictions = pipeline.predict(test_text)
 
     confusion += confusion_matrix(test_y, predictions)
-    score = f1_score(test_y, predictions, pos_label=SPAM)
+    #score = f1_score(test_y, predictions, average='samples')
+    score = accuracy_score(test_y, predictions)
     scores.append(score)
 
 print('Total emails classified:', len(data))
 print('Score:', sum(scores)/len(scores))
 print('Confusion matrix:')
 print(confusion)
-'''
