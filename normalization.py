@@ -1,6 +1,6 @@
 import csv
 import re
-from Categories import Categories
+from categories import Categories
 import os.path
 
 nastygrammer = '([,\/+]|\s{3,})' #regex
@@ -32,11 +32,9 @@ def read_and_normalize_all_columns(path):
                                     + receiver + ';' + account_id + ';' + bank_id)
                 '''
                 # multidimensional booking array
-                bookings.append([category,bookingtype,purpose,creditor_id,receiver,account_id,bank_id])
-
-        #for row in booking_list:
-         #   print(row)
-
+                bookings.append([category, bookingtype,
+                                 purpose, creditor_id,
+                                 receiver, account_id, bank_id])
     return bookings
 
 def build_trainingset():

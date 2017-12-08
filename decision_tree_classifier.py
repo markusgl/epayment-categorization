@@ -1,49 +1,39 @@
-''' Multi-Class categorization vor e-payments using Naive Bayes classifier'''
-
+from sklearn import tree
 import numpy
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import BernoulliNB
-from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import KFold
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from sklearn.feature_extraction.text import TfidfTransformer
 from plot_confusion_matrix import Ploter
-import Feature_Extraction
-from Categories import Categories as ctg
+import feature_extraction
+from categories import Categories as ctg
 
-
-''' Test with examples and print prediction result '''
 def test_with_examples():
     count_vectorizer = CountVectorizer()
-    classifier = MultinomialNB()
-    # classifier = BernoulliNB()
-    # classifier = GaussianNB()
-
-    counts, targets = Feature_Extraction.extract_featrues()
-    classifier.fit(counts, targets.values)
+    counts, targets = feature_extraction.extract_features()
+    classifier = tree.DecisionTreeClassifier()
+    classifier.fit(counts, targets)
 
     examples = ['versicherungen', 'dauerauftrag miete spenglerstr', 'norma', 'adac', 'nuernberger']
     example_counts = count_vectorizer.transform(examples)
     predictions = classifier.predict(example_counts)
-    #for prediction in predictions:
-    #    for example in examples:
-    #        print(prediction + ": " + example)
     print(predictions)
 
 
-''' ###### USE PIPELINING ####### '''
+'''
+    ###### USE PIPELINING ####### 
+'''
 pipeline = Pipeline([
     ('count_vectorizer',   CountVectorizer(ngram_range=(1, 2))),
     ('tfidf_transformer',  TfidfTransformer()),
-    ('classifier',         MultinomialNB())
+    ('classifier',         tree.DecisionTreeClassifier())
 ])
 
 ''' ###### CROSS VALIDATION ####### 
 Validate the classifier against unseen data using k-fold cross validation
 '''
-data = Feature_Extraction.append_data_frames()
+data = feature_extraction.append_data_frames()
 k_fold = KFold(n=len(data), n_folds=6)
 scores = []
 confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
@@ -65,13 +55,12 @@ for train_indices, test_indices in k_fold:
 
 print('Total emails classified:', len(data))
 print('Score:', sum(scores)/len(scores))
-#print('Confusion matrix:')
-#print(confusion)
+print('Confusion matrix:')
+print(confusion)
 
 class_names = [ctg.BARENTNAHME.name, ctg.FINANZEN.name,
                ctg.FREIZEITLIFESTYLE.name, ctg.LEBENSHALTUNG.name,
                ctg.MOBILITAETVERKEHR.name, ctg.VERSICHERUNGEN.name,
                ctg.WOHNENHAUSHALT.name]
 
-Ploter.plot_and_show_confusion_matrix(confusion, class_names, normalize=True, title='NB Classifier normalized', save=True)
-
+Ploter.plot_and_show_confusion_matrix(confusion, class_names, normalize=True, title='Decision Tree normalized', save=False)
