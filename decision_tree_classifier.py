@@ -9,6 +9,9 @@ from plot_confusion_matrix import Ploter
 import feature_extraction
 from categories import Categories as ctg
 
+
+# TODO - work in progess...
+
 def test_with_examples():
     count_vectorizer = CountVectorizer()
     counts, targets = feature_extraction.extract_features()
@@ -53,7 +56,7 @@ for train_indices, test_indices in k_fold:
     score = accuracy_score(test_y, predictions)
     scores.append(score)
 
-print('Total emails classified:', len(data))
+print('Total transactions classified:', len(data))
 print('Score:', sum(scores)/len(scores))
 print('Confusion matrix:')
 print(confusion)

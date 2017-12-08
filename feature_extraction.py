@@ -6,25 +6,17 @@ from categories import Categories as cat
 
 NEWLINE = '\n'
 
-BARENTNAHME = 'barentnahme'
-FINANZEN = 'finanzen'
-FREIZEITLIFESTYLE = 'freizeitlifestyle'
-LEBENSHALTUNG = 'lebenshaltung'
-MOBILITAETVERKEHR = 'mobilitaetverkehrsmittel'
-VERSICHERUNGEN = 'versicherungen'
-WOHNENHAUSHALT = 'wohnenhaushalt'
-
 #root_path='F:\\Datasets\\Transaction-Dataset\\'
 root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
 
 SOURCES = [
-    (root_path+'barentnahme',   BARENTNAHME),
-    (root_path+'finanzen',    FINANZEN),
-    (root_path+'freizeitlifestyle',  FREIZEITLIFESTYLE),
-    (root_path+'lebenshaltung',   LEBENSHALTUNG),
-    (root_path+'mobilitaetverkehrsmittel',     MOBILITAETVERKEHR),
-    (root_path+'versicherungen', VERSICHERUNGEN),
-    (root_path+'wohnenhaushalt',          WOHNENHAUSHALT)
+    (root_path +'barentnahme', cat.BARENTNAHME),
+    (root_path+'finanzen', cat.FINANZEN),
+    (root_path+'freizeitlifestyle', cat.FREIZEITLIFESTYLE),
+    (root_path+'lebenshaltung', cat.LEBENSHALTUNG),
+    (root_path+'mobilitaetverkehrsmittel', cat.MOBILITAETVERKEHR),
+    (root_path+'versicherungen', cat.VERSICHERUNGEN),
+    (root_path+'wohnenhaushalt', cat.WOHNENHAUSHALT)
 ]
 
 SKIP_FILES = {'cmds'}

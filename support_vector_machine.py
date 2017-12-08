@@ -1,18 +1,12 @@
-"""
-Multi-Class categorization vor e-payments using Naive Bayes classifier
-"""
-
-import numpy
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.naive_bayes import BernoulliNB
-from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import SGDClassifier
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.cross_validation import KFold
-from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
-from sklearn.feature_extraction.text import TfidfTransformer
-from plot_confusion_matrix import Ploter
 import feature_extraction
+from sklearn import metrics
+from sklearn.cross_validation import KFold
+import numpy
+from sklearn.metrics import confusion_matrix, accuracy_score
+from plot_confusion_matrix import Ploter
 from categories import Categories as cat
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
@@ -20,8 +14,7 @@ category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.MOBILITAETVERKEHR.name, cat.VERSICHERUNGEN.name,
                   cat.WOHNENHAUSHALT.name]
 
-
-def classify_examples(bernoulliNB=False, tfidf=False):
+def classify_examples(tfidf=False):
     """
     Classify examples and print prediction result
     :param bernoulliNB: use Bernoulli Model - default is Multinomial NB
@@ -31,10 +24,7 @@ def classify_examples(bernoulliNB=False, tfidf=False):
     count_vectorizer = CountVectorizer()
     count_vectorizer.fit_transform(data['text'].values)
 
-    classifier = MultinomialNB()
-    if bernoulliNB:
-        classifier = BernoulliNB()
-
+    classifier = SGDClassifier()
     # retrieve feature vector and target vector
     counts, targets = feature_extraction.extract_features()
     if tfidf:
@@ -48,31 +38,7 @@ def classify_examples(bernoulliNB=False, tfidf=False):
 
     print(predictions)
 
-
-def classify_examples_pipeline():
-    """
-    Classify examples and print prediction result
-    ###### USE PIPELINING - DRAFT #######
-    - Feature extraction and classification task are merged into one operation
-    """
-    pipeline = Pipeline([
-        ('count_vectorizer',   CountVectorizer(ngram_range=(1, 2))),
-        ('classifier',         MultinomialNB())
-    ])
-
-    ''' Generate training data '''
-    count_vectorizer = CountVectorizer()
-    examples = ['versicherungen', 'dauerauftrag miete spenglerstr', 'norma',
-                'adac', 'nuernberger']
-    # document to document-term matrix
-    example_counts = count_vectorizer.transform(examples)
-
-    # retrieve feature vector and target vector
-    tfidf, targets = feature_extraction.extract_features_tfidf()
-    pipeline.fit(tfidf, targets) # train the classifier
-    predictions = pipeline.predict(example_counts)
-
-    print(predictions)
+    print(metrics.classification_report())
 
 
 def classify_w_cross_validation(plot=False):
@@ -81,10 +47,11 @@ def classify_w_cross_validation(plot=False):
     :param plot: choose whether to plot the confusion matrix with matplotlib
     """
     pipeline = Pipeline([
-        ('count_vectorizer', CountVectorizer(ngram_range=(1, 2))),
+        ('count_vectorizer', CountVectorizer()),
         ('tfidf_transformer', TfidfTransformer()),
-        ('classifier', MultinomialNB())
+        ('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
     ])
+
     data = feature_extraction.append_data_frames()
     k_fold = KFold(n=len(data), n_folds=6)
     scores = []
@@ -119,6 +86,4 @@ def classify_w_cross_validation(plot=False):
                                               title='NB Classifier normalized',
                                               save=True)
 
-
-#classify_examples()
-classify_w_cross_validation(True)
+classify_w_cross_validation(False)

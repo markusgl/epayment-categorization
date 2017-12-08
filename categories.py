@@ -8,3 +8,4 @@ class Categories(Enum):
     MOBILITAETVERKEHR = 'mobilitaetverkehrsmittel'
     VERSICHERUNGEN = 'versicherungen'
     WOHNENHAUSHALT = 'wohnenhaushalt'
+
