@@ -10,13 +10,13 @@ NEWLINE = '\n'
 root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
 
 SOURCES = [
-    (root_path +'barentnahme', cat.BARENTNAHME),
-    (root_path+'finanzen', cat.FINANZEN),
-    (root_path+'freizeitlifestyle', cat.FREIZEITLIFESTYLE),
-    (root_path+'lebenshaltung', cat.LEBENSHALTUNG),
-    (root_path+'mobilitaetverkehrsmittel', cat.MOBILITAETVERKEHR),
-    (root_path+'versicherungen', cat.VERSICHERUNGEN),
-    (root_path+'wohnenhaushalt', cat.WOHNENHAUSHALT)
+    (root_path +'barentnahme', cat.BARENTNAHME.name),
+    (root_path+'finanzen', cat.FINANZEN.name),
+    (root_path+'freizeitlifestyle', cat.FREIZEITLIFESTYLE.name),
+    (root_path+'lebenshaltung', cat.LEBENSHALTUNG.name),
+    (root_path+'mobilitaetverkehrsmittel', cat.MOBILITAETVERKEHR.name),
+    (root_path+'versicherungen', cat.VERSICHERUNGEN.name),
+    (root_path+'wohnenhaushalt', cat.WOHNENHAUSHALT.name)
 ]
 
 SKIP_FILES = {'cmds'}

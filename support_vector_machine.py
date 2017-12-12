@@ -24,21 +24,29 @@ def classify_examples(tfidf=False):
     count_vectorizer = CountVectorizer()
     count_vectorizer.fit_transform(data['text'].values)
 
-    classifier = SGDClassifier()
+    classifier = SGDClassifier(loss='log')
     # retrieve feature vector and target vector
     counts, targets = feature_extraction.extract_features()
     if tfidf:
         counts, targets = feature_extraction.extract_features_tfidf()
 
-    examples = ['versicherungen', 'dauerauftrag miete spenglerstr', 'norma', 'adac', 'nuernberger']
+    examples = ['advocard', 'xdfsd','versicherungen', 'dauerauftrag miete spenglerstr', 'norma', 'adac', 'nuernberger']
     example_counts = count_vectorizer.transform(examples)
 
     classifier.fit(counts, targets) #train the classifier
     predictions = classifier.predict(example_counts)
+    predict_probabilities = classifier.predict_proba(example_counts)
+
+    for i in range(len(predict_probabilities)):
+        print(examples[i])
+        val = predict_probabilities[i]
+        for j in range(len(category_names)):
+            print(category_names[j] + ": " + str(round(val[j] * 100, 2)) + "%")
+        print(" ")
 
     print(predictions)
 
-    print(metrics.classification_report())
+    #print(metrics.classification_report())
 
 
 def classify_w_cross_validation(plot=False):
@@ -86,4 +94,5 @@ def classify_w_cross_validation(plot=False):
                                               title='NB Classifier normalized',
                                               save=True)
 
-classify_w_cross_validation(False)
+classify_examples()
+#classify_w_cross_validation(False)
