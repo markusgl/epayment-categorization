@@ -1,6 +1,5 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, render_template
 from naive_bayes_classifier import NBClassifier
-import json
 
 app = Flask(__name__)
 
@@ -15,14 +14,17 @@ def classify():
 
 @app.route("/classifyjson", methods=['POST'])
 def classifyjson():
-    data = request.get_json()
-    owner = data['owner']
-    usage = data['usage']
-    booking_text = data['text']
-
-    print(owner + " " + usage + " " + booking_text)
-    query = booking_text + " " + owner + " " + usage
-    return NBClassifier.classify(query)
+    req_data = request.get_json()
+    if 'text' and 'usage' and 'owner' in req_data:
+        booking_text = req_data['text']
+        usage = req_data['usage']
+        owner = req_data['owner']
+        #print(booking_text + " " + usage + " " + owner)
+        query = [booking_text, usage, owner]
+    else:
+        return render_template('404.html'), 404
+    classifier = NBClassifier()
+    return classifier.classify(query)
 
 if __name__ == '__main__':
     app.run(debug=True)

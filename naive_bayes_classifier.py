@@ -15,6 +15,7 @@ from plot_confusion_matrix import Ploter
 import feature_extraction
 from categories import Categories as cat
 from sklearn.externals import joblib
+from preprocessing.normalization import Normalizer
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -22,13 +23,14 @@ category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.WOHNENHAUSHALT.name]
 
 class NBClassifier:
-    def classify(term):
+    def classify(self, term_list):
         """
         Classify examples and print prediction result
         :param bernoulliNB: use Bernoulli Model - default is Multinomial NB
         :param tfidf: use TF-IDF - default is bag-of-words (word count)
         """
-        term_list = [term]
+        normalizer = Normalizer()
+        fields = normalizer.normalize_text_fields(term_list)
         data = feature_extraction.append_data_frames()
         count_vectorizer = CountVectorizer()
         count_vectorizer.fit_transform(data['text'].values)
@@ -43,7 +45,7 @@ class NBClassifier:
         #if tfidf:
         #    counts, targets = feature_extraction.extract_features_tfidf()
 
-        example_counts = count_vectorizer.transform(term_list)
+        example_counts = count_vectorizer.transform(fields)
         classifier.fit(counts, targets)  # train the classifier
 
         predict_probabilities = classifier.predict_proba(example_counts)
@@ -63,7 +65,7 @@ class NBClassifier:
         return category
 
 
-    def classify_examples(examples, bernoulliNB=False,
+    def classify_examples(self, examples, bernoulliNB=False,
                           tfidf=False, persist=False,
                           probabilites=False):
         """
@@ -119,7 +121,7 @@ class NBClassifier:
         print(predictions)
 
 
-    def classify_examples_pipeline():
+    def classify_examples_pipeline(self):
         """
         Classify examples and print prediction result
         ###### USE PIPELINING - DRAFT #######
@@ -146,7 +148,7 @@ class NBClassifier:
         print(predictions)
 
 
-    def classify_w_cross_validation(bernoulliNB=False, plot=False):
+    def classify_w_cross_validation(self, bernoulliNB=False, plot=False):
         """
         Validate the classifier against unseen data using k-fold cross validation
         :param plot: choose whether to plot the confusion matrix with matplotlib
