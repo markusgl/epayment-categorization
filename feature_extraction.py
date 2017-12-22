@@ -1,8 +1,9 @@
 import os
 import numpy as np
 from pandas import DataFrame
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
 from categories import Categories as cat
+from scipy import sparse
 
 NEWLINE = '\n'
 
@@ -10,7 +11,7 @@ NEWLINE = '\n'
 root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
 
 SOURCES = [
-    (root_path +'barentnahme', cat.BARENTNAHME.name),
+    (root_path+'barentnahme', cat.BARENTNAHME.name),
     (root_path+'finanzen', cat.FINANZEN.name),
     (root_path+'freizeitlifestyle', cat.FREIZEITLIFESTYLE.name),
     (root_path+'lebenshaltung', cat.LEBENSHALTUNG.name),
@@ -90,12 +91,24 @@ def extract_features_tfidf():
     """
     Learn vocabulary and extract features using tf-idf
     (term frequency - inverse document frequency)
-    :return: term-document matrix
+    :return: term-document matrix, array of class labels
     """
     data = append_data_frames()
-    tfidf_transformer = TfidfTransformer()
+    tfidf_vectorizer = TfidfVectorizer()
 
     targets = data['class'].values
-    tfidf = tfidf_transformer.fit_transform(data['text'].values)
+    tfidf = tfidf_vectorizer.fit_transform(data['text'].values)
 
     return tfidf, targets
+
+def extract_example_features():
+    data = append_data_frames()
+    count_vectorizer = CountVectorizer()
+    count_vectorizer.fit_transform(data['text'].values)
+
+    examples = ['advocard', 'xdfsd', 'versicherungen',
+                'dauerauftrag miete spenglerstr', 'norma', 'adac',
+                'nuernberger']
+    example_counts = count_vectorizer.transform(examples)
+
+    return example_counts, examples

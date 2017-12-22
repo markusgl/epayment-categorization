@@ -5,7 +5,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import KFold
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from sklearn.feature_extraction.text import TfidfTransformer
-from plot_confusion_matrix import Ploter
+from plotter import Ploter
 import feature_extraction
 from categories import Categories as ctg
 

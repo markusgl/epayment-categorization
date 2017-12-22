@@ -1,3 +1,7 @@
+"""
+SVM with stochastic gradient descend (SGD) learning
+"""
+
 from sklearn.linear_model import SGDClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.pipeline import Pipeline
@@ -6,43 +10,50 @@ from sklearn import metrics
 from sklearn.cross_validation import KFold
 import numpy
 from sklearn.metrics import confusion_matrix, accuracy_score
-from plot_confusion_matrix import Ploter
+from plotter import Ploter
 from categories import Categories as cat
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
                   cat.MOBILITAETVERKEHR.name, cat.VERSICHERUNGEN.name,
                   cat.WOHNENHAUSHALT.name]
 
-def classify_examples(tfidf=False):
+def classify_examples(tfidf=False, plot=False, log=False):
     """
     Classify examples and print prediction result
     :param bernoulliNB: use Bernoulli Model - default is Multinomial NB
     :param tfidf: use TF-IDF - default is bag-of-words (word count)
     """
-    data = feature_extraction.append_data_frames()
-    count_vectorizer = CountVectorizer()
-    count_vectorizer.fit_transform(data['text'].values)
 
-    classifier = SGDClassifier(loss='log')
+    classifier = SGDClassifier(loss='hinge', alpha=0.001, max_iter=100)
+    if log:
+        classifier = SGDClassifier(loss='log')
+
     # retrieve feature vector and target vector
     counts, targets = feature_extraction.extract_features()
     if tfidf:
         counts, targets = feature_extraction.extract_features_tfidf()
 
-    examples = ['advocard', 'xdfsd','versicherungen', 'dauerauftrag miete spenglerstr', 'norma', 'adac', 'nuernberger']
-    example_counts = count_vectorizer.transform(examples)
+    example_counts, examples = feature_extraction.extract_example_features()
 
     classifier.fit(counts, targets) #train the classifier
     predictions = classifier.predict(example_counts)
-    predict_probabilities = classifier.predict_proba(example_counts)
 
-    for i in range(len(predict_probabilities)):
-        print(examples[i])
-        val = predict_probabilities[i]
-        for j in range(len(category_names)):
-            print(category_names[j] + ": " + str(round(val[j] * 100, 2)) + "%")
-        print(" ")
+    if plot:
+        #TODO
+        print("not implemented yet")
+
+    if log:
+        predict_probabilities = classifier.predict_proba(example_counts)
+        for i in range(len(predict_probabilities)):
+            print(examples[i])
+            val = predict_probabilities[i]
+            for j in range(len(category_names)):
+                print(category_names[j] + ": " + str(round(val[j] * 100, 2)) + "%")
+            print(" ")
 
     print(predictions)
 
@@ -57,7 +68,8 @@ def classify_w_cross_validation(plot=False):
     pipeline = Pipeline([
         ('count_vectorizer', CountVectorizer()),
         ('tfidf_transformer', TfidfTransformer()),
-        ('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
+        ('classifier', SGDClassifier(loss='log'))
+        #('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
     ])
 
     data = feature_extraction.append_data_frames()
@@ -91,8 +103,8 @@ def classify_w_cross_validation(plot=False):
         Ploter.plot_and_show_confusion_matrix(confusion,
                                               category_names,
                                               normalize=True,
-                                              title='NB Classifier normalized',
+                                              title='SVM Classifier',
                                               save=True)
 
-classify_examples()
-#classify_w_cross_validation(False)
+classify_examples(log=True)
+#classify_w_cross_validation(True)

@@ -1,5 +1,5 @@
 """
-Multi-Class categorization vor e-payments using Naive Bayes classifier
+Multi-Class categorization for e-payments using Naive Bayes classifier
 """
 
 import numpy
@@ -11,7 +11,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import KFold
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from sklearn.feature_extraction.text import TfidfTransformer
-from plot_confusion_matrix import Ploter
+from plotter import Ploter
 import feature_extraction
 from categories import Categories as cat
 from sklearn.externals import joblib
@@ -23,7 +23,7 @@ category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.WOHNENHAUSHALT.name]
 
 class NBClassifier:
-    def classify(self, term_list):
+    def classify(self, term_list, tfidf=False):
         """
         Classify examples and print prediction result
         :param bernoulliNB: use Bernoulli Model - default is Multinomial NB
@@ -42,8 +42,8 @@ class NBClassifier:
 
         # feature vector and target vector
         counts, targets = feature_extraction.extract_features()
-        #if tfidf:
-        #    counts, targets = feature_extraction.extract_features_tfidf()
+        if tfidf:
+            counts, targets = feature_extraction.extract_features_tfidf()
 
         example_counts = count_vectorizer.transform(fields)
         classifier.fit(counts, targets)  # train the classifier
@@ -194,6 +194,6 @@ class NBClassifier:
                                                   save=True)
 
 #if __name__ == 'main':
-
-#classify_examples(['advocard', 'versicherung', 'xsadadf', 'miete'])
+clf = NBClassifier()
+clf.classify_examples(['advocard', 'versicherung', 'xsadadf', 'miete'], tfidf=True)
 #classify_w_cross_validation(True)
