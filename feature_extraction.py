@@ -1,14 +1,22 @@
 import os
 import numpy as np
+import pandas
 from pandas import DataFrame
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
 from categories import Categories as cat
-from scipy import sparse
+from preprocessing.nltk_preprocessor import NLTKPreprocessor
+from nltk import word_tokenize
+from nltk.stem.porter import PorterStemmer
+import string
+import nltk
+import re
 
+#nltk.download('punkt')
 NEWLINE = '\n'
+nastygrammer = '([,\/+]|\s{3,})' #regex
 
-#root_path='F:\\Datasets\\Transaction-Dataset\\'
-root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
+root_path='F:\\Datasets\\Transaction-Dataset\\'
+#root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
 
 SOURCES = [
     (root_path+'barentnahme', cat.BARENTNAHME.name),
@@ -21,6 +29,8 @@ SOURCES = [
 ]
 
 SKIP_FILES = {'cmds'}
+
+filepath = 'F:/Datasets/transactions_and_categories_new_cats.csv'
 
 def read_files(path):
     """
@@ -62,6 +72,7 @@ def build_data_frame(path, classification):
     data_frame = DataFrame(rows, index=index)
     return data_frame
 
+
 def append_data_frames():
     """
     concatenate DataFrames using pandas append method
@@ -73,16 +84,42 @@ def append_data_frames():
 
     return data.reindex(np.random.permutation(data.index))
 
+
+def extract_features_from_csv(tfidf=False):
+    """
+    builds a pandas data frame from csv file (semicolon separated)
+    class name has to be in column 0
+    columns 3, 4 and 8 need to be text, usage and owner
+    :param filepath: path to csv file
+    :return: word counts, targets
+    """
+    df = pandas.read_csv(filepath_or_buffer=filepath, delimiter=';', usecols=[0, 3, 4, 8])
+    df['text'] = df.Buchungstext.str.replace(nastygrammer, ' ').str.lower() + \
+                 ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
+                 ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
+    #TODO normalize dataframe
+    vectorizer = CountVectorizer(ngram_range=(1, 2))
+    if tfidf:
+        vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5)
+
+    targets = df['Kategorie'].values
+    word_counts = vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
+
+    return word_counts, targets
+
+
 def extract_features():
     """
     Learn vocabulary and extract features using bag-of-words (word count)
     :return: term-document matrix
     """
     data = append_data_frames()
-    count_vectorizer = CountVectorizer() # bag-of-words
+    #print(data['class'].values)
+    count_vectorizer = CountVectorizer(ngram_range=(1, 2)) # bag-of-words
 
+    #print(data['text'].values)
     targets = data['class'].values
-    word_counts = count_vectorizer.fit_transform(data['text'].values)
+    word_counts = count_vectorizer.fit_transform(data['text'].values).astype(float)
 
     return word_counts, targets
 
@@ -112,3 +149,9 @@ def extract_example_features():
     example_counts = count_vectorizer.transform(examples)
 
     return example_counts, examples
+
+
+#data = extract_features_from_csv('F:/Datasets/transactions_and_categories_full.csv')
+data = extract_features_from_csv()
+#print(data)
+#counts, targets = extract_features()

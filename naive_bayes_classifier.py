@@ -2,20 +2,23 @@
 Multi-Class categorization for e-payments using Naive Bayes classifier
 """
 
-import numpy
+import numpy as np
+from matplotlib.colors import ListedColormap
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold, train_test_split, cross_val_score
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from sklearn.feature_extraction.text import TfidfTransformer
-from plotter import Ploter
+from plotter import Plotter
 import feature_extraction
 from categories import Categories as cat
 from sklearn.externals import joblib
 from preprocessing.normalization import Normalizer
+from sklearn.preprocessing import StandardScaler
+
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -121,36 +124,11 @@ class NBClassifier:
         print(predictions)
 
 
-    def classify_examples_pipeline(self):
-        """
-        Classify examples and print prediction result
-        ###### USE PIPELINING - DRAFT #######
-        - Feature extraction and classification task are merged into one operation
-        """
-        pipeline = Pipeline([
-            ('count_vectorizer', CountVectorizer(ngram_range=(1, 2))),
-            ('classifier', MultinomialNB())
-        ])
-
-        ''' Generate training data '''
-        count_vectorizer = CountVectorizer()
-        examples = ['advocard', 'versicherungen', 'dauerauftrag miete spenglerstr',
-                    'norma',
-                    'adac', 'nuernberger']
-        # document to document-term matrix
-        example_counts = count_vectorizer.transform(examples)
-
-        # retrieve feature vector and target vector
-        tfidf, targets = feature_extraction.extract_features_tfidf()
-        pipeline.fit(tfidf, targets)  # train the classifier
-        predictions = pipeline.predict(example_counts)
-
-        print(predictions)
-
 
     def classify_w_cross_validation(self, bernoulliNB=False, plot=False):
         """
         Validate the classifier against unseen data using k-fold cross validation
+        - Uses pipelining: feature extraction and classification task are merged into one operation
         :param plot: choose whether to plot the confusion matrix with matplotlib
         """
         pipeline = Pipeline([
@@ -160,13 +138,15 @@ class NBClassifier:
         ])
 
         data = feature_extraction.append_data_frames()
-        k_fold = KFold(n=len(data), n_folds=6)
+        #k_fold = KFold(n=len(data), n_folds=6)
+        k_fold = KFold(n_splits=6)
+
         scores = []
-        confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+        confusion = np.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                                  [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                                  [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                                  [0, 0, 0, 0, 0, 0, 0]])
-        for train_indices, test_indices in k_fold:
+        for train_indices, test_indices in k_fold.split(data):
             train_text = data.iloc[train_indices]['text'].values
             train_y = data.iloc[train_indices]['class'].values.astype(str)
 
@@ -187,13 +167,86 @@ class NBClassifier:
         print(confusion)
 
         if plot:
-            Ploter.plot_and_show_confusion_matrix(confusion,
-                                                  category_names,
-                                                  normalize=True,
-                                                  title='NB Classifier normalized',
-                                                  save=True)
+            Plotter.plot_and_show_confusion_matrix(confusion,
+                                                   category_names,
+                                                   normalize=True,
+                                                   title='NB Classifier normalized',
+                                                   save=True)
+
+
+    def classify_new_cross_validation(self, plot=False, fit=False):
+        """
+        Validate the classifier against unseen data using k-fold cross validation
+        """
+        counts, target = feature_extraction.extract_features_from_csv()
+
+        # hold 20% out for testing
+        X_train, X_test, y_train, y_test = train_test_split(counts, target, test_size=0.2, random_state=0)
+
+        #X_train.shape, y_train.shape
+        #X_test.shape, y_test.shape
+
+        clf = MultinomialNB(fit_prior=False).fit(X_train, y_train)
+        if fit:
+            sc = StandardScaler(with_mean=False)
+            sc.fit(X_train)
+            X_train_std = sc.transform(X_train)
+            X_test_std = sc.transform(X_test)
+            clf = MultinomialNB(fit_prior=False).fit(X_train_std, y_train)
+
+        predictions = clf.predict(X_test)
+
+        # scores
+        #print(clf.score(X_test_std, y_test))
+        scores = cross_val_score(clf, counts, target, cv=5, scoring='accuracy')
+        print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+
+        confusion = np.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+                                 [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+                                 [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+                                 [0, 0, 0, 0, 0, 0, 0]])
+
+        confusion += confusion_matrix(y_test, predictions)
+        print(confusion)
+
+        if plot:
+            Plotter.plot_and_show_confusion_matrix(confusion,
+                                                   category_names,
+                                                   normalize=True,
+                                                   title='NB Classifier normalized',
+                                                   save=True)
+
+        # plot decision boundaries
+        """
+        df = feature_extraction.append_data_frames()
+        y = df.iloc[0:100, 0].values
+        X = df.iloc[0:100, 1].values
+        
+        plt.scatter(X[:50], y[:],
+                    color='red', marker='o', label='Barentnahme')
+       #plt.scatter(X[0:50], X[50:100],
+       #             color='blue', marker='x', label='Lebenshaltung')
+
+        plt.xlabel(' length ')
+        plt.ylabel('petal length ')
+        plt.legend(loc='upper left')
+        plt.show()
+        """
+        '''
+        X_combined_std = np.vstack((X_train_std, X_test_std))
+        y_combined = np.hstack((y_train, y_test))
+        self.plot_decision_regions(X=X_combined_std, y=y_combined, classifier=clf)
+        plt.xlabel('test')
+        plt.ylabel('test1')
+        plt.show()
+        '''
+
+
 
 #if __name__ == 'main':
 clf = NBClassifier()
-clf.classify_examples(['advocard', 'versicherung', 'xsadadf', 'miete'], tfidf=True)
-#classify_w_cross_validation(True)
+#clf.classify_examples(['advocard', 'versicherung', 'xsadadf', 'miete'])
+#clf.classify_w_cross_validation()
+clf.classify_new_cross_validation()
+

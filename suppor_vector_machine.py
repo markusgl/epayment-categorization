@@ -10,7 +10,7 @@ from sklearn import metrics
 from sklearn.cross_validation import KFold
 import numpy
 from sklearn.metrics import confusion_matrix, accuracy_score
-from plotter import Ploter
+from plotter import Plotter
 from categories import Categories as cat
 import numpy as np
 import matplotlib.pyplot as plt
@@ -100,11 +100,11 @@ def classify_w_cross_validation(plot=False):
     print(confusion)
 
     if plot:
-        Ploter.plot_and_show_confusion_matrix(confusion,
-                                              category_names,
-                                              normalize=True,
-                                              title='SVM Classifier',
-                                              save=True)
+        Plotter.plot_and_show_confusion_matrix(confusion,
+                                               category_names,
+                                               normalize=True,
+                                               title='SVM Classifier',
+                                               save=True)
 
 classify_examples(log=True)
 #classify_w_cross_validation(True)

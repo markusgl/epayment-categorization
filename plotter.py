@@ -1,10 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
+
+from matplotlib.colors import ListedColormap
 from sklearn import svm
 from sklearn.datasets import make_blobs
 
-class Ploter:
+
+class Plotter:
 
     np.set_printoptions(precision=2)
 
@@ -52,64 +55,6 @@ class Ploter:
         #plt.figure()
         plt.show()
 
-    def plot_sdg_result(self): #TODO
-        # we only take the first two features. We could
-        # avoid this ugly slicing by using a two-dim dataset
-        colors = "bry"
-
-        # shuffle
-        idx = np.arange(counts.shape[0])
-        np.random.seed(13)
-        np.random.shuffle(idx)
-        counts = counts[idx]
-        targets = targets[idx]
-
-        # standardize
-        print(type(counts))
-        mean = counts.mean(axis=0)
-        std = counts.std(axis=0)
-        counts = (counts - mean) / std
-
-        h = .02  # step size in the mesh
-
-        # create a mesh to plot in
-        x_min, x_max = counts[:, 0].min() - 1, counts[:, 0].max() + 1
-        y_min, y_max = counts[:, 1].min() - 1, counts[:, 1].max() + 1
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                             np.arange(y_min, y_max, h))
-
-        # Put the result into a color plot
-        predictions = predictions.reshape(xx.shape)
-        cs = plt.contourf(xx, yy, predictions, cmap=plt.cm.Paired)
-        plt.axis('tight')
-
-        # Plot also the training points
-        for i, color in zip(classifier.classes_, colors):
-            idx = np.where(targets == i)
-            plt.scatter(counts[idx, 0], counts[idx, 1], c=color,
-                        label=targets[i].values,
-                        cmap=plt.cm.Paired, edgecolor='black', s=20)
-        plt.title("Decision surface of multi-class SGD")
-        plt.axis('tight')
-
-        # Plot the three one-against-all classifiers
-        xmin, xmax = plt.xlim()
-        ymin, ymax = plt.ylim()
-        coef = classifier.coef_
-        intercept = classifier.intercept_
-
-        def plot_hyperplane(c, color):
-            def line(x0):
-                return (-(x0 * coef[c, 0]) - intercept[c]) / coef[c, 1]
-
-            plt.plot([xmin, xmax], [line(xmin), line(xmax)],
-                     ls="--", color=color)
-
-        for i, color in zip(classifier.classes_, colors):
-            plot_hyperplane(i, color)
-        plt.legend()
-        plt.show()
-
 
 if __name__ == '__main__':
-    plotter = Ploter()
+    plotter = Plotter()

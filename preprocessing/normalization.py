@@ -46,7 +46,7 @@ class Normalizer:
         return bookings
 
     def build_trainingset(self):
-        bookings = self.read_and_normalize_all_columns(input_file)
+        bookings = self.read_and_normalize_all_columns(self.input_file)
         count_barentnahme = 0
         count_finanzen = 0
         count_freizeitlifestyle = 0

@@ -5,7 +5,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import KFold
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
 from sklearn.feature_extraction.text import TfidfTransformer
-from plotter import Ploter
+from plotter import Plotter
 import feature_extraction
 from categories import Categories as ctg
 
@@ -66,4 +66,4 @@ class_names = [ctg.BARENTNAHME.name, ctg.FINANZEN.name,
                ctg.MOBILITAETVERKEHR.name, ctg.VERSICHERUNGEN.name,
                ctg.WOHNENHAUSHALT.name]
 
-Ploter.plot_and_show_confusion_matrix(confusion, class_names, normalize=True, title='Decision Tree normalized', save=False)
+Plotter.plot_and_show_confusion_matrix(confusion, class_names, normalize=True, title='Decision Tree normalized', save=False)
