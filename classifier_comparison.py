@@ -28,8 +28,8 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, sv
     # hold 20% out for testing
     X_train, X_test, y_train, y_test = train_test_split(counts, target, test_size=0.2, random_state=0)
 
-    X_train.shape, y_train.shape
-    X_test.shape, y_test.shape
+    #X_train.shape, y_train.shape
+    #X_test.shape, y_test.shape
     sc = StandardScaler(with_mean=False)
     sc.fit(X_train)
     X_train_std = sc.transform(X_train)
@@ -78,4 +78,4 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, sv
                                               title='NB Classifier normalized',
                                               save=True)
 
-classify(svm=True, persist=True, tfidf=True)
+classify(svm=True, tfidf=True)

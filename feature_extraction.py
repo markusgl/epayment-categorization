@@ -2,16 +2,16 @@ import os
 import numpy as np
 import pandas
 from pandas import DataFrame
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, HashingVectorizer
 from categories import Categories as cat
 from preprocessing.nltk_preprocessor import NLTKPreprocessor
 from nltk import word_tokenize
-from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 import string
 import nltk
 import re
 
-#nltk.download('punkt')
+nltk.download('wordnet')
 NEWLINE = '\n'
 nastygrammer = '([,\/+]|\s{3,})' #regex
 
@@ -30,7 +30,19 @@ SOURCES = [
 
 SKIP_FILES = {'cmds'}
 
-filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
+#filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
+filepath = 'F:/Datasets/transactions_and_categories_new_cats.csv'
+#filepath = 'F:/Datasets/Labeled_transactions.csv'
+
+
+class LemmaTokenizer(object):
+    def __init__(self):
+        self.wnl = WordNetLemmatizer()
+    def __call__(self, doc):
+        return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
+
+vect = CountVectorizer(tokenizer=LemmaTokenizer())
+
 
 def read_files(path):
     """
@@ -97,11 +109,12 @@ def extract_features_from_csv(tfidf=False):
     df['text'] = df.Buchungstext.str.replace(nastygrammer, ' ').str.lower() + \
                  ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
                  ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
-    #TODO normalize dataframe
+
+    #TODO normalize dataframe with ntlk
     if tfidf:
-        vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5)
+        vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
     else:
-        vectorizer = CountVectorizer(ngram_range=(1, 2))
+        vectorizer = CountVectorizer(tokenizer=LemmaTokenizer(), ngram_range=(1, 2))
 
     targets = df['Kategorie'].values
     word_counts = vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
