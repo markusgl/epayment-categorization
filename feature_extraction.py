@@ -15,8 +15,8 @@ import re
 NEWLINE = '\n'
 nastygrammer = '([,\/+]|\s{3,})' #regex
 
-root_path='F:\\Datasets\\Transaction-Dataset\\'
-#root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
+#root_path='F:\\Datasets\\Transaction-Dataset\\'
+root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
 
 SOURCES = [
     (root_path+'barentnahme', cat.BARENTNAHME.name),
@@ -30,7 +30,7 @@ SOURCES = [
 
 SKIP_FILES = {'cmds'}
 
-filepath = 'F:/Datasets/transactions_and_categories_new_cats.csv'
+filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
 
 def read_files(path):
     """
@@ -93,14 +93,15 @@ def extract_features_from_csv(tfidf=False):
     :param filepath: path to csv file
     :return: word counts, targets
     """
-    df = pandas.read_csv(filepath_or_buffer=filepath, delimiter=';', usecols=[0, 3, 4, 8])
+    df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=';', usecols=[0, 3, 4, 8])
     df['text'] = df.Buchungstext.str.replace(nastygrammer, ' ').str.lower() + \
                  ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
                  ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
     #TODO normalize dataframe
-    vectorizer = CountVectorizer(ngram_range=(1, 2))
     if tfidf:
         vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5)
+    else:
+        vectorizer = CountVectorizer(ngram_range=(1, 2))
 
     targets = df['Kategorie'].values
     word_counts = vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
