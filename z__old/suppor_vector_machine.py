@@ -1,18 +1,61 @@
-import feature_extraction
-from sklearn.cross_validation import KFold
+"""
+SVM with stochastic gradient descend (SGD) learning
+"""
+
 import numpy
+from sklearn.cross_validation import KFold
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+from sklearn.linear_model import SGDClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.pipeline import Pipeline
-from plotter import Plotter
+
+import feature_extraction
 from categories import Categories as cat
+from comparison.plotter import Plotter
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
                   cat.MOBILITAETVERKEHR.name, cat.VERSICHERUNGEN.name,
                   cat.WOHNENHAUSHALT.name]
+
+def classify_examples(tfidf=False, plot=False, log=False):
+    """
+    Classify examples and print prediction result
+    :param bernoulliNB: use Bernoulli Model - default is Multinomial NB
+    :param tfidf: use TF-IDF - default is bag-of-words (word count)
+    """
+
+    classifier = SGDClassifier(loss='hinge', alpha=0.001, max_iter=100)
+    if log:
+        classifier = SGDClassifier(loss='log')
+
+    # retrieve feature vector and target vector
+    counts, targets = feature_extraction.extract_features()
+    if tfidf:
+        counts, targets = feature_extraction.extract_features_tfidf()
+
+    example_counts, examples = feature_extraction.extract_example_features()
+
+    classifier.fit(counts, targets) #train the classifier
+    predictions = classifier.predict(example_counts)
+
+    if plot:
+        #TODO
+        print("not implemented yet")
+
+    if log:
+        predict_probabilities = classifier.predict_proba(example_counts)
+        for i in range(len(predict_probabilities)):
+            print(examples[i])
+            val = predict_probabilities[i]
+            for j in range(len(category_names)):
+                print(category_names[j] + ": " + str(round(val[j] * 100, 2)) + "%")
+            print(" ")
+
+    print(predictions)
+
+    #print(metrics.classification_report())
+
 
 def classify_w_cross_validation(plot=False):
     """
@@ -20,9 +63,10 @@ def classify_w_cross_validation(plot=False):
     :param plot: choose whether to plot the confusion matrix with matplotlib
     """
     pipeline = Pipeline([
-        ('count_vectorizer', CountVectorizer(ngram_range=(1, 2))),
+        ('count_vectorizer', CountVectorizer()),
         ('tfidf_transformer', TfidfTransformer()),
-        ('classifier', KNeighborsClassifier())
+        ('classifier', SGDClassifier(loss='log'))
+        #('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
     ])
 
     data = feature_extraction.append_data_frames()
@@ -43,12 +87,12 @@ def classify_w_cross_validation(plot=False):
         predictions = pipeline.predict(test_text)
 
         confusion += confusion_matrix(test_y, predictions)
-        # score = f1_score(test_y, predictions, average='samples')
+        #score = f1_score(test_y, predictions, average='samples')
         score = accuracy_score(test_y, predictions)
         scores.append(score)
 
     print('Total transactions classified:', len(data))
-    print('Score:', sum(scores) / len(scores))
+    print('Score:', sum(scores)/len(scores))
     print('Confusion matrix:')
     print(confusion)
 
@@ -56,6 +100,8 @@ def classify_w_cross_validation(plot=False):
         Plotter.plot_and_show_confusion_matrix(confusion,
                                                category_names,
                                                normalize=True,
-                                               title='K-Nearest-Neighbours Classifier',
+                                               title='SVM Classifier',
                                                save=True)
-classify_w_cross_validation(plot=True)
+
+classify_examples(log=True)
+#classify_w_cross_validation(True)

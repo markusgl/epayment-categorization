@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas
 from pandas import DataFrame
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, HashingVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from categories import Categories as cat
 from preprocessing.nltk_preprocessor import NLTKPreprocessor
 from nltk import word_tokenize
@@ -10,8 +10,10 @@ from nltk.stem import WordNetLemmatizer
 import string
 import nltk
 import re
+from booking import Booking
 
 nltk.download('wordnet')
+nltk.download('punkt')
 NEWLINE = '\n'
 nastygrammer = '([,\/+]|\s{3,})' #regex
 
@@ -30,19 +32,80 @@ SOURCES = [
 
 SKIP_FILES = {'cmds'}
 
-#filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
-filepath = 'F:/Datasets/transactions_and_categories_new_cats.csv'
+filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
+#filepath = 'F:/Datasets/transactions_and_categories_new_cats.csv'
 #filepath = 'F:/Datasets/Labeled_transactions.csv'
 
 
 class LemmaTokenizer(object):
     def __init__(self):
         self.wnl = WordNetLemmatizer()
+
     def __call__(self, doc):
         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
 
-vect = CountVectorizer(tokenizer=LemmaTokenizer())
 
+class FeatureExtractor:
+    def __init__(self):
+        self.vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
+
+    def extract_features_from_csv(self, tfidf=False):
+        """
+        builds a pandas data frame from csv file (semicolon separated)
+        class name has to be in column 0
+        columns 3, 4 and 8 need to be text, usage and owner
+        :param filepath: path to csv file
+        :return: word counts, targets
+        """
+        df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=';', usecols=[0, 3, 4, 8])
+        df['text'] = df.Buchungstext.str.replace(nastygrammer, ' ').str.lower() + \
+                     ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
+                     ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
+
+        #TODO normalize dataframe with ntlk
+        #if tfidf:
+        #    vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
+        #else:
+        #    vectorizer = CountVectorizer(tokenizer=LemmaTokenizer(), ngram_range=(1, 2))
+
+        targets = df['Kategorie'].values
+        word_counts = self.vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
+
+        return word_counts, targets
+
+    def extract_example_features(self, examples):
+        # df = pandas.DataFrame({'text': [' '.join(examples[0:3])], 'class': []})
+        #df = DataFrame({'text': []})
+        #df['text'] = [' '.join(examples[0:3])]
+
+        example_counts = self.vectorizer.transform([' '.join(examples[0:3])])
+
+        return example_counts
+
+    def extract_new_features(self, booking):
+        """
+        class name has to be in column 0
+        columns 3, 4 and 8 need to be text, usage and owner
+        :param booking
+        :return: word counts, targets
+        """
+        # Load base data set
+        df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=';', usecols=[0, 3, 4, 8])
+        df['text'] = df.Buchungstext.str.replace(nastygrammer, ' ').str.lower() + \
+                     ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
+                     ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
+
+        # add new booking to data set
+        #df['text'].append(booking.text + ' ' + booking.usage + ' ' + booking.owner)
+
+        vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
+        targets = df['Kategorie'].values
+        word_counts = vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
+
+        return word_counts, targets
+
+
+### DEPRECATED ###
 
 def read_files(path):
     """
@@ -97,31 +160,6 @@ def append_data_frames():
     return data.reindex(np.random.permutation(data.index))
 
 
-def extract_features_from_csv(tfidf=False):
-    """
-    builds a pandas data frame from csv file (semicolon separated)
-    class name has to be in column 0
-    columns 3, 4 and 8 need to be text, usage and owner
-    :param filepath: path to csv file
-    :return: word counts, targets
-    """
-    df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=';', usecols=[0, 3, 4, 8])
-    df['text'] = df.Buchungstext.str.replace(nastygrammer, ' ').str.lower() + \
-                 ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
-                 ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
-
-    #TODO normalize dataframe with ntlk
-    if tfidf:
-        vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
-    else:
-        vectorizer = CountVectorizer(tokenizer=LemmaTokenizer(), ngram_range=(1, 2))
-
-    targets = df['Kategorie'].values
-    word_counts = vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
-
-    return word_counts, targets
-
-
 def extract_features():
     """
     Learn vocabulary and extract features using bag-of-words (word count)
@@ -152,20 +190,11 @@ def extract_features_tfidf():
 
     return tfidf, targets
 
-def extract_example_features():
-    data = append_data_frames()
-    count_vectorizer = CountVectorizer()
-    count_vectorizer.fit_transform(data['text'].values)
-
-    examples = ['advocard', 'xdfsd', 'versicherungen',
-                'dauerauftrag miete spenglerstr', 'norma', 'adac',
-                'nuernberger']
-    example_counts = count_vectorizer.transform(examples)
-
-    return example_counts, examples
 
 
+#examples_entry = ['KARTENZAHLUNG', '2017-09-03T08:41:04 Karte1 2018-12', 'SUPOL NURNBERG AUSSERE BAYREUTHER STR']
+#extract_example_features(examples_entry)
 #data = extract_features_from_csv('F:/Datasets/transactions_and_categories_full.csv')
-data = extract_features_from_csv()
+#data = extract_features_from_csv()
 #print(data)
 #counts, targets = extract_features()

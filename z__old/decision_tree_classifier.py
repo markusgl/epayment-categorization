@@ -1,13 +1,14 @@
-from sklearn import tree
 import numpy
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import Pipeline
+from sklearn import tree
 from sklearn.cross_validation import KFold
-from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from plotter import Plotter
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.pipeline import Pipeline
+
 import feature_extraction
 from categories import Categories as ctg
+from comparison.plotter import Plotter
 
 
 # TODO - work in progess...

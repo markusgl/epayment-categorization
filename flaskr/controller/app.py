@@ -1,7 +1,10 @@
 from flask import Flask, request, render_template
-from naive_bayes_classifier import NBClassifier
+from booking_classifier import BookingClassifier
+from booking import Booking, BookingSchema
+from persistence.db_persist import DBClient
 
 app = Flask(__name__)
+classifier = BookingClassifier()
 
 @app.route("/",methods=['GET'])
 def howto():
@@ -10,7 +13,7 @@ def howto():
 @app.route("/classify", methods=['POST'])
 def classify():
     term = request.form['term']
-    return NBClassifier.classify([term])
+    return BookingClassifier.classify([term])
 
 @app.route("/classifyjson", methods=['POST'])
 def classifyjson():
@@ -23,8 +26,20 @@ def classifyjson():
         query = [booking_text, usage, owner]
     else:
         return render_template('404.html'), 404
-    classifier = NBClassifier()
+    classifier = BookingClassifier()
     return classifier.classify(query)
+
+@app.route("/addbooking", methods=['POST'])
+def add_booking():
+    req_data = request.get_json()
+    booking_schema = BookingSchema()
+    booking, errors = booking_schema.load(req_data).data
+    if errors:
+        return render_template('404.html'), 404
+    DBClient().add_booking(booking)
+    return "added booking"
+
+#TODO new rules from user and admin
 
 if __name__ == '__main__':
     app.run(debug=True)
