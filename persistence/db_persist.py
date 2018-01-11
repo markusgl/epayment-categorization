@@ -11,6 +11,7 @@ class DBClient:
         print("successfully added " + str(id))
 
 
+
 #booking = {"owner":"testo", "usage":"testu", "text":"testt"}
 #post_id = bookings.insert_one(booking).inserted_id
 #print(post_id)
