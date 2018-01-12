@@ -48,7 +48,7 @@ class BookingClassifier:
         """
         # self.clf = MultinomialNB(fit_prior=False)
         #self.clf = SGDClassifier(loss='hinge', alpha=0.001, max_iter=100)
-        clf = SGDClassifier(loss='log', max_iter=100, tol=None)
+        clf = SGDClassifier(loss='log', max_iter=100, tol=None, shuffle=True)
         feature_extractor = FeatureExtractor()
 
         counts, targets = feature_extractor.extract_new_features(booking)

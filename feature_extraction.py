@@ -11,6 +11,7 @@ import string
 import nltk
 import re
 from booking import Booking
+import scipy as sp
 
 nltk.download('wordnet')
 nltk.download('punkt')
@@ -32,9 +33,9 @@ SOURCES = [
 
 SKIP_FILES = {'cmds'}
 
-filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
+#filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
 #filepath = 'F:/Datasets/transactions_and_categories_new_cats.csv'
-#filepath = 'F:/Datasets/Labeled_transactions.csv'
+filepath = 'F:/Datasets/Labeled_transactions.csv'
 
 
 class LemmaTokenizer(object):
@@ -49,7 +50,7 @@ class FeatureExtractor:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
 
-    def extract_features_from_csv(self, tfidf=False):
+    def extract_features_from_csv(self):
         """
         builds a pandas data frame from csv file (semicolon separated)
         class name has to be in column 0
@@ -62,14 +63,13 @@ class FeatureExtractor:
                      ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
                      ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
 
+        #text = df[['Buchungstext', 'Verwendungszweck', 'Beguenstigter']]
+
         #TODO normalize dataframe with ntlk
-        #if tfidf:
-        #    vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
-        #else:
-        #    vectorizer = CountVectorizer(tokenizer=LemmaTokenizer(), ngram_range=(1, 2))
 
         targets = df['Kategorie'].values
         word_counts = self.vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
+        #word_counts = sp.hstack(text.apply(lambda col: self.vectorizer.fit_transform(col.values.astype(str)).astype(float)))
 
         return word_counts, targets
 
@@ -103,6 +103,9 @@ class FeatureExtractor:
         word_counts = vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
 
         return word_counts, targets
+
+fex = FeatureExtractor()
+w,c = fex.extract_features_from_csv()
 
 
 ### DEPRECATED ###

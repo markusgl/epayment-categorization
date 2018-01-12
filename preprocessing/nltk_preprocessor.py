@@ -5,6 +5,7 @@ from nltk.corpus import wordnet as wn
 from nltk import wordpunct_tokenize
 from nltk import word_tokenize
 from nltk import WordNetLemmatizer
+import nltk
 from nltk import sent_tokenize
 from nltk import pos_tag
 
@@ -71,3 +72,15 @@ class NLTKPreprocessor(BaseEstimator, TransformerMixin):
 
         return self.lemmatizer.lemmatize(token, tag)
     """
+examples = ['AUGENOPTIK SCHMIDT 210710001234567890987654321 ELV12345678 01.01 10.00 ME1 SEPA-ELV-Lastschrift',
+            'DANKE, IHR LIDL//Nuernberg/DE 2017-01-01T10:00:00 Karte1 2017-12 Kartenzahlung',
+            'MUSTER LEBENSVERSICHERUNG AG 123456789098 MLV LEBENSVERS. / 01.01.2017 50, 00 Lastschrift',
+            'Gesund BKK 1234567 AKV KRANKENVERS. R/ 01.01.2017 6,00 Lastschrift']
+
+for example in examples:
+    print(nltk.tokenize.TreebankWordTokenizer().tokenize(example))
+    #nltk.tokenize.WordPunctTokenizer().tokenize(example)
+    #nltk.word_tokenize(example)
+    #nltk.tokenize.WhitespaceTokenizer.tokenize(example)
+    #nltk.tokenize.MWETokenizer.tokenize(example)
+    #nltk.tokenize.StanfordSegmenter(example)

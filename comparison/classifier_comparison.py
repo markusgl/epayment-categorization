@@ -24,36 +24,38 @@ category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
 
 
 def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, svm=False,
-             decision_tree=False, random_forest=False, tfidf=False, persist=False):
+             decision_tree=False, random_forest=False, persist=False):
     """
     Validate the classifier against unseen data using k-fold cross validation
     """
-    counts, target = FeatureExtractor().extract_features_from_csv(tfidf)
+    counts, target = FeatureExtractor().extract_features_from_csv()
 
     # hold 20% out for testing
     X_train, X_test, y_train, y_test = train_test_split(counts, target, test_size=0.2, random_state=0)
 
-    #X_train.shape, y_train.shape
-    #X_test.shape, y_test.shape
-    sc = StandardScaler(with_mean=False)
-    sc.fit(X_train)
-    X_train_std = sc.transform(X_train)
-    X_test_std = sc.transform(X_test)
+    X_train.shape, y_train.shape
+    X_test.shape, y_test.shape
+    #sc = StandardScaler(with_mean=False)
+    #sc.fit(X_train)
+    #X_train_std = sc.transform(X_train)
+    #X_test_std = sc.transform(X_test)
 
     if multinomial_nb:
-        clf = MultinomialNB(fit_prior=False).fit(X_train_std, y_train)
+        clf = MultinomialNB(fit_prior=False).fit(X_train, y_train)
         clf_title = 'Multinomial NB'
     elif bernoulli_nb:
-        clf = BernoulliNB().fit(X_train_std, y_train)
+        clf = BernoulliNB().fit(X_train, y_train)
         clf_title = 'Bernoulli NB'
     elif knn:
-        clf = KNeighborsClassifier().fit(X_train_std, y_train)
+        clf = KNeighborsClassifier().fit(X_train, y_train)
         clf_title = 'K-Nearest-Neighbour'
     elif decision_tree:
-        clf = tree.DecisionTreeClassifier().fit(X_train_std, y_train)
+        clf = tree.DecisionTreeClassifier().fit(X_train, y_train)
         clf_title = 'Decision Tree'
     elif svm:
-        clf = SGDClassifier(loss='hinge', alpha=0.001, max_iter=100).fit(X_train, y_train)
+        #clf = SGDClassifier(loss='hinge', alpha=0.001, max_iter=100).fit(X_train, y_train)
+        clf = SGDClassifier(loss='modified_huber', alpha=0.001, max_iter=100).fit(X_train, y_train)
+        #clf = SGDClassifier(loss='log', alpha=0.001, max_iter=100).fit(X_train, y_train)
         clf_title = 'Support Vector Machine'
     elif random_forest:
         clf = RandomForestClassifier().fit(X_train, y_train)
@@ -87,4 +89,4 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, sv
                                               title=clf_title,
                                               save=True)
 
-classify(svm=True, tfidf=True)
+classify(svm=True)
