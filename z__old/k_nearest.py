@@ -5,9 +5,9 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 
-import feature_extraction
 from categories import Categories as cat
 from comparison.plotter import Plotter
+from z__old import _old_feature_extraction
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -25,7 +25,7 @@ def classify_w_cross_validation(plot=False):
         ('classifier', KNeighborsClassifier())
     ])
 
-    data = feature_extraction.append_data_frames()
+    data = _old_feature_extraction.append_data_frames()
     k_fold = KFold(n=len(data), n_folds=6)
     scores = []
     confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],

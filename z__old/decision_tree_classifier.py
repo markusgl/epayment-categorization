@@ -6,16 +6,16 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.pipeline import Pipeline
 
-import feature_extraction
 from categories import Categories as ctg
 from comparison.plotter import Plotter
+from z__old import _old_feature_extraction
 
 
 # TODO - work in progess...
 
 def test_with_examples():
     count_vectorizer = CountVectorizer()
-    counts, targets = feature_extraction.extract_features()
+    counts, targets = _old_feature_extraction.extract_features()
     classifier = tree.DecisionTreeClassifier()
     classifier.fit(counts, targets)
 
@@ -37,7 +37,7 @@ pipeline = Pipeline([
 ''' ###### CROSS VALIDATION ####### 
 Validate the classifier against unseen data using k-fold cross validation
 '''
-data = feature_extraction.append_data_frames()
+data = _old_feature_extraction.append_data_frames()
 k_fold = KFold(n=len(data), n_folds=6)
 scores = []
 confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],

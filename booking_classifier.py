@@ -1,13 +1,10 @@
 
+import numpy as np
+from sklearn.externals import joblib
+from sklearn.linear_model import SGDClassifier
+
 from categories import Categories as cat
 from feature_extraction import FeatureExtractor
-from sklearn.linear_model import SGDClassifier
-from sklearn.naive_bayes import MultinomialNB
-import numpy as np
-import pickle
-from sklearn.externals import joblib
-from booking import Booking
-
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,

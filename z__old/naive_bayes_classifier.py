@@ -13,10 +13,10 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-import feature_extraction
 from categories import Categories as cat
 from comparison.plotter import Plotter
-from feature_extraction import FeatureExtractor
+from z__old import _old_feature_extraction
+from z__old._old_feature_extraction import FeatureExtractor
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -78,7 +78,7 @@ class NBClassifier:
         :param bernoulliNB: use Bernoulli Model - default is Multinomial NB
         :param tfidf: use TF-IDF - default is bag-of-words (word count)
         """
-        data = feature_extraction.append_data_frames()
+        data = _old_feature_extraction.append_data_frames()
         count_vectorizer = CountVectorizer()
         count_vectorizer.fit_transform(data['text'].values)
 
@@ -88,9 +88,9 @@ class NBClassifier:
         #classifier = joblib.load('nb_classifier.pkl')
 
         # retrieve feature vector and target vector
-        counts, targets = feature_extraction.extract_features()
+        counts, targets = _old_feature_extraction.extract_features()
         if tfidf:
-            counts, targets = feature_extraction.extract_features_tfidf()
+            counts, targets = _old_feature_extraction.extract_features_tfidf()
 
         example_counts = count_vectorizer.transform(examples)
 
@@ -139,7 +139,7 @@ class NBClassifier:
             ('classifier', MultinomialNB(fit_prior=False))
         ])
 
-        data = feature_extraction.append_data_frames()
+        data = _old_feature_extraction.append_data_frames()
         #k_fold = KFold(n=len(data), n_folds=6)
         k_fold = KFold(n_splits=6)
 
@@ -180,7 +180,7 @@ class NBClassifier:
         """
         Validate the classifier against unseen data using k-fold cross validation
         """
-        counts, target = feature_extraction.extract_features_from_csv()
+        counts, target = _old_feature_extraction.extract_features_from_csv()
 
         # hold 20% out for testing
         X_train, X_test, y_train, y_test = train_test_split(counts, target, test_size=0.2, random_state=0)

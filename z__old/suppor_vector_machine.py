@@ -9,9 +9,9 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.pipeline import Pipeline
 
-import feature_extraction
 from categories import Categories as cat
 from comparison.plotter import Plotter
+from z__old import _old_feature_extraction
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -30,11 +30,11 @@ def classify_examples(tfidf=False, plot=False, log=False):
         classifier = SGDClassifier(loss='log')
 
     # retrieve feature vector and target vector
-    counts, targets = feature_extraction.extract_features()
+    counts, targets = _old_feature_extraction.extract_features()
     if tfidf:
-        counts, targets = feature_extraction.extract_features_tfidf()
+        counts, targets = _old_feature_extraction.extract_features_tfidf()
 
-    example_counts, examples = feature_extraction.extract_example_features()
+    example_counts, examples = _old_feature_extraction.extract_example_features()
 
     classifier.fit(counts, targets) #train the classifier
     predictions = classifier.predict(example_counts)
@@ -69,7 +69,7 @@ def classify_w_cross_validation(plot=False):
         #('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
     ])
 
-    data = feature_extraction.append_data_frames()
+    data = _old_feature_extraction.append_data_frames()
     k_fold = KFold(n=len(data), n_folds=6)
     scores = []
     confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
