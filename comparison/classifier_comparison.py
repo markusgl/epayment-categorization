@@ -1,20 +1,27 @@
 """
 Compare different classifiers for booking classification
 """
+from pprint import pprint
+from time import time
 
 import numpy as np
 from sklearn import tree, svm
+from sklearn.datasets import fetch_20newsgroups
+from sklearn_evaluation import plot
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from categories import Categories as cat
 from comparison.plotter import Plotter
 from feature_extraction import FeatureExtractor
+import matplotlib.pyplot as plt
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -28,6 +35,12 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
     """
     Validate the classifier against unseen data using k-fold cross validation
     """
+
+    parameters = [
+        {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+        {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+    ]
+
     counts, target = FeatureExtractor().extract_features_from_csv()
 
     # hold 20% out for testing
@@ -40,10 +53,6 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
     #X_train_std = sc.transform(X_train)
     #X_test_std = sc.transform(X_test)
 
-    tuned_parameters = [
-        {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-        {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
-    ]
 
     if multinomial_nb:
         clf = MultinomialNB(fit_prior=False).fit(X_train, y_train)
@@ -84,8 +93,7 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
             print("# Tuning hyper-parameters for %s" % score)
             print()
 
-            clf = GridSearchCV(SVC(), tuned_parameters, cv=5,
-                               scoring='%s_macro' % score)
+            clf = GridSearchCV(SVC(), parameters, cv=5, scoring='%s_macro' % score)
             clf.fit(X_train, y_train)
 
             print("Best parameters set found on development set:")
@@ -138,5 +146,93 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
                                               title=clf_title,
                                               save=True)
 
-classify(hyperparam_estim=True)
+
+def estimate_parameters():
+    booking_data, booking_targets = FeatureExtractor().fetch_data()
+
+    # test bag-of-words and tf-idf with SVM classification
+    pipeline1 = Pipeline([
+        ('vect', CountVectorizer()),
+        ('clf', SVC())
+    ])
+
+    pipeline2 = Pipeline([
+        ('tfidf', TfidfVectorizer()),
+        ('clf', SVC())
+    ])
+
+    SVC_KERNELS =['linear', 'sigmoid', 'rbf', 'poly']
+    C_OPTIONS = [1, 10, 100, 1000]
+    N_GRAMS = [(1, 1), (1, 2), (1, 3)]
+    parameters1 = {
+            'vect__max_df': (0.5, 0.75, 1.0),
+            'vect__ngram_range': N_GRAMS,
+            'clf__C': C_OPTIONS,
+            'clf__kernel': SVC_KERNELS,
+            'clf__gamma': (0.001, 0.0001)
+        }
+
+    parameters2 = {
+            'tfidf__max_df': (0.5, 0.75, 1.0),
+            'tfidf__ngram_range': ((1, 1), (1, 2)),
+            'tfidf__sublinear_tf': (True, False),
+            'clf__C': C_OPTIONS,
+            'clf__kernel': SVC_KERNELS,
+            'clf__gamma': (0.001, 0.0001)
+        }
+    kernel_labels=['linear', 'sigmoid', 'rbf', 'poly']
+
+    for i in range(1, 2):
+        pipeline = pipeline1
+        parameters = parameters1
+        grid_search = GridSearchCV(pipeline, param_grid=parameters, n_jobs=1, verbose=10)
+
+        print("parameters:")
+        pprint(parameters)
+        grid_search.fit(booking_data, booking_targets)
+
+
+
+        print()
+        print("best_param: " + str(grid_search.best_params_))
+        print("Best score: %0.3f" % grid_search.best_score_)
+        print("Best parameters set:")
+        best_parameters = grid_search.best_estimator_.get_params()
+        for param_name in sorted(parameters.keys()):
+            print((param_name, best_parameters[param_name]))
+
+
+        #plot.grid_search(grid_search.grid_scores_, change='n_estimators', kind='bar')
+
+        mean_scores = np.array(grid_search.cv_results_['mean_test_score'])
+        mean_scores = mean_scores.reshape(len(C_OPTIONS), -1, len(SVC_KERNELS))
+
+        # select score for best C
+        mean_scores = mean_scores.max(axis=0)
+        #bar_offsets = (np.arange(len(SVC_KERNELS)) * (len(kernel_labels) + 1) + .5)
+        bar_offsets= (np.arange(len(C_OPTIONS)) * (len(C_OPTIONS) + 1) + .5)
+
+        plt.figure()
+        COLORS = 'bgrcmyk'
+        for i, (label, reducer_scores) in enumerate(zip(kernel_labels, mean_scores)):
+            plt.bar(bar_offsets + i, reducer_scores, label=label, color=COLORS[i])
+
+        plt.title("Comparing SVC kernel techniques")
+        plt.xlabel('Kernels')
+        plt.xticks(bar_offsets + len(kernel_labels) / 2, SVC_KERNELS)
+        plt.ylabel('Classification accuracy')
+        plt.ylim((0, 1))
+        plt.legend(loc='upper left')
+        plt.show()
+
+
+#classify(hyperparam_estim=True)
 #classify(support_vm=True)
+#classify(gridsearch=True)
+estimate_parameters()
+
+#booking_data, booking_targets = FeatureExtractor().fetch_data()
+#print(type(booking_data))
+#print(booking_data)
+#print(type(booking_targets))
+#print(booking_targets)

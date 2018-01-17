@@ -109,7 +109,7 @@ for example in examples:
     #example = example.replace(',', '.')
     #clean_example = re.sub(nastygrammer, ' ', example.lower())
     clean_example = example.replace('[/+]', ' ')
-    print('cleaned example: ' + clean_example)
+    #print('cleaned example: ' + clean_example)
     #print('TreebankWordTokenizer: ' + str(TreebankWordTokenizer().tokenize(clean_example)))
     #print('WordPunctTokenizer: ' + str(WordPunctTokenizer().tokenize(example)))
     #print('WhitespaceTokenizer: ' + str(WhitespaceTokenizer().tokenize(example)))
