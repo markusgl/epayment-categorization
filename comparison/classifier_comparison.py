@@ -7,7 +7,7 @@ from time import time
 import numpy as np
 from sklearn import tree, svm
 from sklearn.datasets import fetch_20newsgroups
-from sklearn_evaluation import plot
+#from sklearn_evaluation import plot
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
@@ -161,15 +161,16 @@ def estimate_parameters():
         ('clf', SVC())
     ])
 
-    SVC_KERNELS =['linear', 'sigmoid', 'rbf', 'poly']
+    #SVC_KERNELS =['linear', 'sigmoid', 'rbf', 'poly']
     C_OPTIONS = [1, 10, 100, 1000]
-    N_GRAMS = [(1, 1), (1, 2), (1, 3)]
+    #N_GRAMS = [(1, 1), (1, 2), (1, 3)]
+    GAMMAS = [1e-3, 1e-4]
     parameters1 = {
-            'vect__max_df': (0.5, 0.75, 1.0),
-            'vect__ngram_range': N_GRAMS,
+            #'vect__max_df': (0.5, 0.75, 1.0),
+            #'vect__ngram_range': N_GRAMS,
             'clf__C': C_OPTIONS,
-            'clf__kernel': SVC_KERNELS,
-            'clf__gamma': (0.001, 0.0001)
+            'clf__kernel': 'linear',
+            'clf__gamma': GAMMAS
         }
 
     parameters2 = {
@@ -177,10 +178,12 @@ def estimate_parameters():
             'tfidf__ngram_range': ((1, 1), (1, 2)),
             'tfidf__sublinear_tf': (True, False),
             'clf__C': C_OPTIONS,
-            'clf__kernel': SVC_KERNELS,
+            #'clf__kernel': SVC_KERNELS,
             'clf__gamma': (0.001, 0.0001)
         }
     kernel_labels=['linear', 'sigmoid', 'rbf', 'poly']
+
+    #plot.grid_search(clf.grid_scores_, change='n_estimators', kind='bar')
 
     for i in range(1, 2):
         pipeline = pipeline1
@@ -190,8 +193,6 @@ def estimate_parameters():
         print("parameters:")
         pprint(parameters)
         grid_search.fit(booking_data, booking_targets)
-
-
 
         print()
         print("best_param: " + str(grid_search.best_params_))
@@ -203,14 +204,14 @@ def estimate_parameters():
 
 
         #plot.grid_search(grid_search.grid_scores_, change='n_estimators', kind='bar')
-
+        # Plot results
         mean_scores = np.array(grid_search.cv_results_['mean_test_score'])
         mean_scores = mean_scores.reshape(len(C_OPTIONS), -1, len(SVC_KERNELS))
 
         # select score for best C
         mean_scores = mean_scores.max(axis=0)
         #bar_offsets = (np.arange(len(SVC_KERNELS)) * (len(kernel_labels) + 1) + .5)
-        bar_offsets= (np.arange(len(C_OPTIONS)) * (len(C_OPTIONS) + 1) + .5)
+        bar_offsets = (np.arange(len(C_OPTIONS)) * (len(C_OPTIONS) + 1) + .5)
 
         plt.figure()
         COLORS = 'bgrcmyk'
@@ -220,14 +221,28 @@ def estimate_parameters():
         plt.title("Comparing SVC kernel techniques")
         plt.xlabel('Kernels')
         plt.xticks(bar_offsets + len(kernel_labels) / 2, SVC_KERNELS)
-        plt.ylabel('Classification accuracy')
+        plt.ylabel('Accuracy')
         plt.ylim((0, 1))
         plt.legend(loc='upper left')
         plt.show()
 
 
+        #scores = [x[1] for x in grid_search.cv_results_['mean_test_score']]
+        #scores = np.array(scores).reshape(len(C_OPTIONS), len(GAMMAS))
+        """
+        scores = np.array(grid_search.cv_results_['mean_test_score'])
+        scores = scores.reshape(len(C_OPTIONS), -1, len(GAMMAS))
+
+        for ind, i in enumerate(C_OPTIONS):
+            plt.plot(GAMMAS, scores[ind], label='C: ' + str(i))
+        plt.legend()
+        plt.xlabel('Gamma')
+        plt.ylabel('Mean score')
+        plt.show()
+        """
+
 #classify(hyperparam_estim=True)
-#classify(support_vm=True)
+#classify(logistic_regression=True)
 #classify(gridsearch=True)
 estimate_parameters()
 

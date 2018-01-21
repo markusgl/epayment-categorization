@@ -5,6 +5,7 @@ from nltk.corpus import wordnet as wn
 from nltk import wordpunct_tokenize
 from nltk import word_tokenize
 from nltk import WordNetLemmatizer
+from nltk.stem import SnowballStemmer
 from nltk.tokenize import TreebankWordTokenizer, WordPunctTokenizer, WhitespaceTokenizer, PunktSentenceTokenizer, RegexpTokenizer
 from nltk import sent_tokenize
 from nltk import pos_tag
@@ -12,6 +13,7 @@ import nltk
 from sklearn.base import BaseEstimator, TransformerMixin
 import random
 import re
+import spacy
 from preprocessing.classifier_based_german_tagger import ClassifierBasedGermanTagger
 nastygrammer = '([/+]|\s{3,})' #regex
 
@@ -107,16 +109,24 @@ examples = ['DANKE, IHR LIDL//Nuernberg/DE 2017-01-01T10:00:00 Karte1 2017-12 Ka
 
 for example in examples:
     #example = example.replace(',', '.')
-    #clean_example = re.sub(nastygrammer, ' ', example.lower())
-    clean_example = example.replace('[/+]', ' ')
+    clean_example = re.sub(nastygrammer, ' ', example.lower())
+    #clean_example = example.replace('[/+]', ' ')
+    #print(clean_example)
     #print('cleaned example: ' + clean_example)
     #print('TreebankWordTokenizer: ' + str(TreebankWordTokenizer().tokenize(clean_example)))
     #print('WordPunctTokenizer: ' + str(WordPunctTokenizer().tokenize(example)))
     #print('WhitespaceTokenizer: ' + str(WhitespaceTokenizer().tokenize(example)))
 
     #print('RegexpTokenizer' + str(RegexpTokenizer(r'\w+|[,:-.]').tokenize(example)))
+    sbs = SnowballStemmer('german')
+    print(sbs.stem(clean_example))
+    nlp = spacy.load('de')
+    doc = nlp(clean_example)
 
-    #print(WordNetLemmatizer().lemmatize(example))
+    for token in doc:
+        print(token.lemma_)
+
+    print(WordNetLemmatizer().lemmatize(clean_example))
     #print(nltk.word_tokenize(example))
     #print(WhitespaceTokenizer().tokenize(example))
 

@@ -12,13 +12,14 @@ import nltk
 import re
 from booking import Booking
 import scipy as sp
+from file_handling.file_handler import FileHandler
 
 #nltk.download('wordnet')
 #nltk.download('punkt')
 
-nastygrammer = '([\/+]|\s{3,})' #regex
+disturb_chars = '([\/+]|\s{3,})' #regex
 
-filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv'
+#filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv'
 #filepath = 'C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv'
 
 
@@ -35,20 +36,20 @@ class LemmaTokenizer(object):
 
 class FeatureExtractor:
     def __init__(self):
+        self.file_handler = FileHandler()
         self.vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), ngram_range=(1,1), sublinear_tf=False, max_df=0.5)
 
     def extract_features_from_csv(self):
         """
         builds a pandas data frame from csv file (semicolon separated)
-        class name has to be in column 0
-        columns 3, 4 and 8 need to be text, usage and owner
-        :param filepath: path to csv file
+        only columns category, bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
-        df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=',')
-        df['values'] = df.bookingtext.str.replace(nastygrammer, ' ').str.lower() + \
-                     ' ' + df.usage.str.replace(nastygrammer, ' ').str.lower() + \
-                     ' ' + df.owner.str.replace(nastygrammer, ' ').str.lower()
+        #df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=',')
+        df = self.file_handler.read_csv()
+        df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
 
         targets = df['category'].values
         word_counts = self.vectorizer.fit_transform(df['values'].values.astype(str)).astype(float)
@@ -66,41 +67,22 @@ class FeatureExtractor:
         return example_counts
 
     def fetch_data(self):
-        df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "UTF-8", delimiter=',')
-        df['values'] = df.bookingtext.str.replace(nastygrammer, ' ').str.lower() + \
-                     ' ' + df.usage.str.replace(nastygrammer, ' ').str.lower() + \
-                     ' ' + df.owner.str.replace(nastygrammer, ' ').str.lower()
+        #df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "UTF-8", delimiter=',')
+        df = self.file_handler.read_csv()
+        df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
 
         targets = df['category'].values
 
         return df['values'].values.astype(str), targets
 
-    def extract_new_features(self, booking):
-        """
-        class name has to be in column 0
-        columns 3, 4 and 8 need to be text, usage and owner
-        :param booking
-        :return: word counts, targets
-        """
-        # Load base data set
-        df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=';', usecols=[0, 3, 4, 8])
-        df['text'] = df.Buchungstext.str.replace(nastygrammer, ' ').str.lower() + \
-                     ' ' + df.Verwendungszweck.str.replace(nastygrammer, ' ').str.lower() + \
-                     ' ' + df.Beguenstigter.str.replace(nastygrammer, ' ').str.lower()
 
-        # add new booking to data set
-        #df['text'].append(booking.text + ' ' + booking.usage + ' ' + booking.owner)
-
-        vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), sublinear_tf=True, max_df=0.5)
-        targets = df['Kategorie'].values
-        word_counts = vectorizer.fit_transform(df['text'].values.astype(str)).astype(float)
-
-        return word_counts, targets
 
 #fex = FeatureExtractor()
 #w,c = fex.extract_features_from_csv()
-wln_test = WordNetLemmatizer()
-sbs = SnowballStemmer('german')
-print(wln_test.lemmatize('Statistik'))
-print(sbs.stem('Statistik'))
+#wln_test = WordNetLemmatizer()
+#sbs = SnowballStemmer('german')
+#print(wln_test.lemmatize('Statistik'))
+#print(sbs.stem('Statistik'))
 

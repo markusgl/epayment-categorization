@@ -3,9 +3,11 @@ from flask_pymongo import PyMongo
 from booking_classifier import BookingClassifier
 from booking import Booking, BookingSchema
 from persistence.db_persist import DBClient
+from file_handling.file_handler import FileHandler
 
 app = Flask(__name__)
 classifier = BookingClassifier()
+file_handler = FileHandler()
 
 app.config['MONGO_DBNAME'] = 'bookingset'
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/bookingset'
@@ -13,7 +15,7 @@ mongo = PyMongo(app, config_prefix='MONGO')
 
 @app.route("/",methods=['GET'])
 def howto():
-    return "Please POST request via JSON"
+    return "Only POST allowed"
 
 @app.route("/classify", methods=['POST'])
 def classify():
@@ -31,20 +33,26 @@ def classifyjson():
         query = [booking_text, usage, owner]
     else:
         return render_template('404.html'), 404
-    classifier = BookingClassifier()
+    #classifier = BookingClassifier()
     return classifier.classify(query)
 
 @app.route("/addbooking", methods=['POST'])
 def add_booking():
-    bookings = mongo.db.bookings
+    #bookings = mongo.db.bookings
     req_data = request.get_json()
-    #booking_schema = BookingSchema()
-    #booking = booking_schema.load(req_data).data
-    booking_id = bookings.insert_one(req_data).inserted_id
-    #if errors:
-    #    return render_template('404.html'), 404
+    booking_schema = BookingSchema()
+    booking, errors = booking_schema.load(req_data)
+    if errors:
+        print(errors)
+        return render_template('404.html'), 404
+    else:
+        # Insert new booking into CSV
+        file_handler.write_csv(booking)
+
+    #booking_id = bookings.insert_one(req_data).inserted_id
+
     #DBClient().add_booking(booking)
-    return "added booking"
+    return "booking added"
 
 #TODO new rules from user and admin
 

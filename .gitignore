@@ -1,0 +1,21 @@
+# idea
+*.iml
+.idea
+overlays
+# eclipse
+.project
+.settings
+.classpath
+.metadata
+# maven
+target
+# visual studio
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+__pycache__/
+*.py[cod]
+*.png
+*.conll09
+*.pkl
