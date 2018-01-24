@@ -107,6 +107,8 @@ examples = ['DANKE, IHR LIDL//Nuernberg/DE 2017-01-01T10:00:00 Karte1 2017-12 Ka
 #tokenized_examples = (['DANKE', 'IHR', 'LIDL', 'Nuernberg', 'DE'])
 #tagger.tag(tokenized_examples)
 
+
+"""
 for example in examples:
     #example = example.replace(',', '.')
     clean_example = re.sub(nastygrammer, ' ', example.lower())
@@ -131,3 +133,4 @@ for example in examples:
     #print(WhitespaceTokenizer().tokenize(example))
 
     #print(StanfordSegmenter().tokenize(example))
+"""

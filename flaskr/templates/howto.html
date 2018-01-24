@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    {% block content %}
+
+   <table style="width:100%">
+      <tr>
+        <th>path</th>
+        <th>content</th>
+      </tr>
+      <tr>
+        <td>/classify</td>
+        <td> {
+            'category':' ',
+            'booking_date':' ',
+            'valuta_date':' ',
+            'text':' ',
+            'usage':' ',
+            'creditor_id':' ',
+            'owner':' ',
+            'iban':' ',
+            'bic':' ',
+            'amount':' '
+        }</td>
+      </tr>
+      <tr>
+        <td>/classifyterm</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>/addbooking</td>
+        <td></td>
+      </tr>
+    </table>
+    {% endblock %}
+</body>
+</html>

@@ -6,8 +6,8 @@ from booking import Booking
 
 class FileHandler():
     def __init__(self):
-        #self.filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv'
-        self.filepath = 'C:/tmp/Labeled_transactions.csv'
+        self.filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv'
+        #self.filepath = 'C:/tmp/Labeled_transactions.csv'
 
     def read_csv(self):
         return pandas.read_csv(filepath_or_buffer=self.filepath, encoding="UTF-8", delimiter=',')

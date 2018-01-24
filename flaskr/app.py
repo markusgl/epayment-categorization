@@ -15,14 +15,14 @@ mongo = PyMongo(app, config_prefix='MONGO')
 
 @app.route("/",methods=['GET'])
 def howto():
-    return "Only POST allowed"
+    return render_template('howto.html'), 200
 
-@app.route("/classify", methods=['POST'])
+@app.route("/classifyterm", methods=['POST'])
 def classify():
     term = request.form['term']
     return BookingClassifier.classify([term])
 
-@app.route("/classifyjson", methods=['POST'])
+@app.route("/classify", methods=['POST'])
 def classifyjson():
     req_data = request.get_json()
     if 'text' and 'usage' and 'owner' in req_data:
