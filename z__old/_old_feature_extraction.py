@@ -19,7 +19,7 @@ NEWLINE = '\n'
 nastygrammer = '([\/+]|\s{3,})' #regex
 
 #root_path='F:\\Datasets\\Transaction-Dataset\\'
-root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
+root_path='/Users/mgl/Datasets/Transaction-Dataset/'
 
 SOURCES = [
     (root_path+'barentnahme', cat.BARENTNAHME.name),
@@ -35,7 +35,7 @@ SKIP_FILES = {'cmds'}
 
 #filepath = '/Users/mgl/Datasets/transactions_and_categories_new_cats.csv'
 #filepath = 'F:/Datasets/transactions_and_categories_new_cats.csv'
-filepath = 'F:/Datasets/Labeled_transactions.csv'
+#filepath = 'F:/Datasets/Labeled_transactions.csv'
 
 
 class LemmaTokenizer(object):
@@ -102,9 +102,6 @@ class OldFeatureExtractor:
 
         return word_counts, targets
 
-fex = FeatureExtractor()
-w,c = fex.extract_features_from_csv()
-
 
 ### DEPRECATED ###
 
@@ -114,12 +111,12 @@ def read_files(path):
     :param path:
     :return: file path, content
     """
-    for root, dir_names, file_names in os.walk(path):
+    for root_path, dir_names, file_names in os.walk(path):
         for path in dir_names:
-            read_files(os.path.join(root, path))
+            read_files(os.path.join(root_path, path))
         for file_name in file_names:
             if file_name not in SKIP_FILES:
-                file_path = os.path.join(root, file_name)
+                file_path = os.path.join(root_path, file_name)
                 if os.path.isfile(file_path):
                     #past_header, lines = False, []
                     lines = []

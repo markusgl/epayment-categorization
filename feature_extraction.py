@@ -37,7 +37,11 @@ class LemmaTokenizer(object):
 class FeatureExtractor:
     def __init__(self):
         self.file_handler = FileHandler()
-        self.vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(), ngram_range=(1,1), sublinear_tf=False, max_df=0.5)
+        self.vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(),
+                                          ngram_range=(1,1),
+                                          sublinear_tf=True,
+                                          use_idf=True,
+                                          max_df=0.5)
 
     def extract_features_from_csv(self):
         """
@@ -52,6 +56,7 @@ class FeatureExtractor:
                      ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
 
         targets = df['category'].values
+        # create term-document matrix
         word_counts = self.vectorizer.fit_transform(df['values'].values.astype(str)).astype(float)
         #word_counts = sp.hstack(text.apply(lambda col: self.vectorizer.fit_transform(col.values.astype(str)).astype(float)))
 
@@ -77,7 +82,17 @@ class FeatureExtractor:
 
         return df['values'].values.astype(str), targets
 
+    def get_dataframes(self):
+        df = self.file_handler.read_csv()
+        df['values'] = df.bookingtext.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.usage.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.owner.str.replace(disturb_chars,
+                                                  ' ').str.lower()
 
+
+        return df['values'], df['category'].values
 
 #fex = FeatureExtractor()
 #w,c = fex.extract_features_from_csv()

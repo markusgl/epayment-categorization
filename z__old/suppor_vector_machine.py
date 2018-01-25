@@ -103,5 +103,5 @@ def classify_w_cross_validation(plot=False):
                                                title='SVM Classifier',
                                                save=True)
 
-classify_examples(log=True)
-#classify_w_cross_validation(True)
+#classify_examples(log=True)
+classify_w_cross_validation(True)
