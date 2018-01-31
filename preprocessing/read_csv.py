@@ -1,10 +1,14 @@
 import csv
+import pprint
 import random
 import re
 import os
+import json
 
 #nastygrammer = '([,\/+]|\s{3,})' #regex
 import string
+
+from pymongo import MongoClient
 
 nastygrammar = '([,"\/+])'
 input_file = '/Users/mgl/Training_Data/smartanalytics_set.csv'
@@ -54,4 +58,33 @@ def random_char_generator(size=1, chars=string.ascii_lowercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-build_data()
+def save_generated_data_to_mongodb():
+    with open('/Users/mgl/Datasets/generated_testdata.csv') as csvfile:
+        filereader = csv.reader(csvfile, delimiter=';')
+
+        for row in filereader:
+            category = str(row[0]).replace('&', '').lower()
+            receiver = str(row[1])
+            creditor_id = str(row[3])
+
+            company = {"category": category, "receiver": receiver,
+                       "creditorid": creditor_id}
+            client = MongoClient('mongodb://localhost:27017/')
+            db = client.companyset # dbname
+            companies = db.companies # collection
+
+            id = companies.insert_one(company).inserted_id
+            print("successfully added " + str(id))
+
+
+#save_generated_data_to_mongodb()
+"""
+client = MongoClient('mongodb://localhost:27017/')
+db = client.companyset # dbname
+
+regex = re.compile("de74zzz00000045294", re.IGNORECASE)
+#pprint.pprint(db.companies.find_one({"creditorid": regex}))
+db_entry = db.companies.find_one({"creditorid": regex})
+print(db_entry['category'])
+"""
+

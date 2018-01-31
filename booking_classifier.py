@@ -1,5 +1,6 @@
 
 import numpy as np
+from pymongo import MongoClient
 from sklearn.externals import joblib
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
@@ -7,6 +8,9 @@ from pathlib import Path
 from categories import Categories as cat
 from categories import FallbackCategorie as fbcat
 from feature_extraction import FeatureExtractor
+import re
+import pprint
+from booking import Booking
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -16,6 +20,9 @@ category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
 class BookingClassifier:
     def __init__(self):
         # Load model and features from disk
+        client = MongoClient('mongodb://localhost:27017/')
+        self.db = client.companyset
+
         # TODO use pipelining
         if Path('booking_classifier.pkl').is_file() and Path('booking_features.pkl'):
             print('loading model...')
@@ -25,22 +32,32 @@ class BookingClassifier:
             print('No model found. Start training classifier...')
             self._train_classifier()
 
+    def match_creditor_id(self, booking):
+        if booking.creditor_id:
+            regex = re.compile(booking.creditor_id, re.IGNORECASE)
+            db_entry = self.db.companies.find_one({"creditorid": regex})
+            return db_entry['category']
+        return -1
 
     def classify(self, term_list):
         """
         Classify examples and print prediction result
         :param: booking as list of owner, text and usage
         """
-        # TODO creditor id matching
+        category = self.match_creditor_id()
+        if category != -1:
+            return category
+
         # TODO SEPA Purpose Code
+
         word_counts = self.feature_extractor.extract_example_features(term_list)
         predict_probabilities = self.clf.predict_proba(word_counts)
         #category = self.clf.predict(example_counts)
 
-        # TODO fallback category
+
         print(max(max(predict_probabilities)))
         if max(max(predict_probabilities)) < 0.7:
-            category = str(fbcat.SONSTIGES.name)
+            category = str(fbcat.SONSTIGES.name) # fallback category
         else:
             category = str(category_names[np.argmax(predict_probabilities)])
 
