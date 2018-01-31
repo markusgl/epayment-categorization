@@ -13,7 +13,8 @@ from sklearn.externals import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, cross_validate, cross_val_predict, KFold
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, \
+    cross_validate, cross_val_predict, KFold, LeaveOneOut
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -36,11 +37,6 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
     """
     Validate the classifier against unseen data using k-fold cross validation
     """
-
-    parameters = [
-        {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-        {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
-    ]
 
     counts, targets = FeatureExtractor().extract_features_from_csv()
 
@@ -81,7 +77,8 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
 
         # best parameters
         #clf = SVC(kernel='rbf', gamma=0.001, C=1000)
-        clf = SVC(kernel='linear', C=10)
+        #clf = SVC(kernel='linear', C=10)
+        clf = SVC(kernel='linear', C=10, decision_function_shape='ovr', probability=True)
 
         """
         Optimal Parameters
@@ -119,8 +116,10 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
     # K-folds cross validation
     #text, targets = FeatureExtractor().fetch_data()
     kc_scores = []
-    kf = KFold(n_splits=6)
-    for train_indices, test_indices in kf.split(counts):
+    kf = KFold(n_splits=25)
+    loo = LeaveOneOut()
+    loo.get_n_splits(counts)
+    for train_indices, test_indices in loo.split(counts):
         train_text = counts[train_indices]
         train_y = targets[train_indices]
 
@@ -135,13 +134,12 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
 
     print("K-Folds score: ", sum(kc_scores)/len(kc_scores))
 
-    #scores = cross_val_score(clf, counts, targets, cv=6, scoring='accuracy')
-
+    scores = cross_val_score(clf, counts, targets, cv=50, scoring='accuracy')
     #predicted = cross_val_predict(clf, counts, targets, cv=10)
     #print(metrics.accuracy_score(targets, predicted))
     #scores = cross_val_score(clf, counts, targets, cv=6, scoring='f1_macro')
-    #print(scores)
-    #print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+    print(scores)
+    print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
     """
     confusion = np.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
@@ -161,7 +159,8 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
                                               save=True)
 
 
-def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=False, support_vm=False):
+def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
+                        k_nearest=False, support_vm=False, support_vmsgd=False):
     booking_data, booking_targets = FeatureExtractor().fetch_data()
 
     # test bag-of-words and tf-idf with SVM
@@ -219,23 +218,37 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=Fals
     elif support_vm:
         CLF = SVC()
         parameters = {
-            'vect__max_df': (0.5, 0.75, 1.0),
-            'vect__ngram_range': N_GRAMS,
-            #'tfidf__max_df': MAX_DF,
-            #'tfidf__ngram_range': N_GRAMS,
-            #'tfidf__sublinear_tf': (True, False),
-            #'tfidf__use_idf': (True, False),
+            #'vect__max_df': (0.5, 0.75, 1.0),
+            #'vect__ngram_range': N_GRAMS,
+            'tfidf__max_df': MAX_DF,
+            'tfidf__ngram_range': N_GRAMS,
+            'tfidf__sublinear_tf': (True, False),
+            'tfidf__use_idf': (True, False),
             'clf__kernel': ('linear', 'sigmoid', 'rbf', 'poly'),
             'clf__C': (1, 10, 100, 1000),
             'clf__gamma': (1e-3, 1e-4)
+        }
+    elif support_vmsgd:
+        parameters = {
+            #'vect__max_df': (0.5, 0.75, 1.0),
+            #'vect__ngram_range': N_GRAMS,
+            'tfidf__max_df': MAX_DF,
+            'tfidf__ngram_range': N_GRAMS,
+            'tfidf__analyzer': 'word',
+            'tfidf__sublinear_tf': (True, False),
+            'tfidf__use_idf': (True, False),
+            'clf__loss': ('hinge', 'modified_huber', 'squared_hinge'),
+            'clf__penalty': ('l1', 'l2'),
+            'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001),
+            'clf__max_iter': (0.4, 0.5, 0.6)
         }
     else:
         print('Please provide one which algorithm to use')
         return
 
     pipeline = Pipeline([
-        ('vect', CountVectorizer()),
-        #('tfidf', TfidfVectorizer()),
+        #('vect', CountVectorizer()),
+        ('tfidf', TfidfVectorizer()),
         ('clf', CLF)
     ])
 
@@ -244,7 +257,8 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=Fals
     #plot.grid_search(clf.grid_scores_, change='n_estimators', kind='bar')
 
     # perform grid search on pipeline
-    grid_search = GridSearchCV(pipeline, param_grid = parameters, n_jobs=1, verbose=10)
+    grid_search = GridSearchCV(pipeline, param_grid = parameters, n_jobs=-1,
+                               verbose=10, cv=25)
 
     print("parameters:")
     pprint(parameters)

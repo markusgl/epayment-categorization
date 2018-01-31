@@ -9,3 +9,5 @@ class Categories(Enum):
     VERSICHERUNGEN = 'versicherungen'
     WOHNENHAUSHALT = 'wohnenhaushalt'
 
+class FallbackCategorie(Enum):
+    SONSTIGES = 'sonstiges'

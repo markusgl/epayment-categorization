@@ -65,8 +65,8 @@ def classify_w_cross_validation(plot=False):
     pipeline = Pipeline([
         ('count_vectorizer', CountVectorizer()),
         ('tfidf_transformer', TfidfTransformer()),
-        ('classifier', SGDClassifier(loss='log'))
-        #('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
+        #('classifier', SGDClassifier(loss='log'))
+        ('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
     ])
 
     data = _old_feature_extraction.append_data_frames()

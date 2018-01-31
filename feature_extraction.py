@@ -23,22 +23,21 @@ disturb_chars = '([\/+]|\s{3,})' #regex
 #filepath = 'C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv'
 
 
-class LemmaTokenizer(object):
+class StemTokenizer(object):
     def __init__(self):
-        self.wnl = WordNetLemmatizer()
         self.sbs = SnowballStemmer('german')
 
     def __call__(self, doc):
         # TreeBankTokenizer
         return [self.sbs.stem(t) for t in word_tokenize(doc)]
-        #return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
 
 
 class FeatureExtractor:
     def __init__(self):
         self.file_handler = FileHandler()
-        self.vectorizer = TfidfVectorizer(tokenizer=LemmaTokenizer(),
-                                          ngram_range=(1,1),
+        self.vectorizer = TfidfVectorizer(tokenizer=StemTokenizer(),
+                                          #ngram_range=(1,1),
+                                          analyzer='word',
                                           sublinear_tf=True,
                                           use_idf=True,
                                           max_df=0.5)
@@ -56,6 +55,7 @@ class FeatureExtractor:
                      ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
 
         targets = df['category'].values
+
         # create term-document matrix
         word_counts = self.vectorizer.fit_transform(df['values'].values.astype(str)).astype(float)
         #word_counts = sp.hstack(text.apply(lambda col: self.vectorizer.fit_transform(col.values.astype(str)).astype(float)))

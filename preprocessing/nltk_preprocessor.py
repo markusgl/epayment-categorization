@@ -104,22 +104,22 @@ examples = ['AUGENOPTIK SCHMIDT 210710001234567890987654321 ELV12345678 01.01 10
 '''
 examples = ['DANKE, IHR LIDL//Nuernberg/DE 2017-01-01T10:00:00 Karte1 2017-12 Kartenzahlung']
 
-#tokenized_examples = (['DANKE', 'IHR', 'LIDL', 'Nuernberg', 'DE'])
+tokenized_examples = (['DANKE', 'IHR', 'LIDL', 'Nuernberg', 'DE'])
 #tagger.tag(tokenized_examples)
 
 
-"""
-for example in examples:
-    #example = example.replace(',', '.')
-    clean_example = re.sub(nastygrammer, ' ', example.lower())
-    #clean_example = example.replace('[/+]', ' ')
-    #print(clean_example)
-    #print('cleaned example: ' + clean_example)
-    #print('TreebankWordTokenizer: ' + str(TreebankWordTokenizer().tokenize(clean_example)))
-    #print('WordPunctTokenizer: ' + str(WordPunctTokenizer().tokenize(example)))
-    #print('WhitespaceTokenizer: ' + str(WhitespaceTokenizer().tokenize(example)))
 
-    #print('RegexpTokenizer' + str(RegexpTokenizer(r'\w+|[,:-.]').tokenize(example)))
+for example in examples:
+    clean_example = re.sub(nastygrammer, ' ', example.lower())
+    #print('cleaned example: ' + clean_example)
+
+    print('TreebankWordTokenizer: ' + str(TreebankWordTokenizer().tokenize(example)))
+    print('WordPunctTokenizer: ' + str(WordPunctTokenizer().tokenize(example)))
+    print('WhitespaceTokenizer: ' + str(WhitespaceTokenizer().tokenize(example)))
+
+    #print('RegexpTokenizer' + str(RegexpTokenizer(r'\w+|[,\-.]').tokenize(example)))
+
+    """
     sbs = SnowballStemmer('german')
     print(sbs.stem(clean_example))
     nlp = spacy.load('de')
@@ -129,8 +129,8 @@ for example in examples:
         print(token.lemma_)
 
     print(WordNetLemmatizer().lemmatize(clean_example))
+    """
     #print(nltk.word_tokenize(example))
     #print(WhitespaceTokenizer().tokenize(example))
 
     #print(StanfordSegmenter().tokenize(example))
-"""
