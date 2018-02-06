@@ -7,6 +7,7 @@ from booking import Booking
 class FileHandler():
     def __init__(self):
         self.filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv'
+        #self.filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_sorted_same_class_amount.csv'
         #self.filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_wo_mock-data.csv'
         #self.filepath = 'C:/tmp/Labeled_transactions.csv'
 

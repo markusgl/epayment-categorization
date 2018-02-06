@@ -1,10 +1,6 @@
-import os
-import numpy as np
-import pandas
-from pandas import DataFrame
+
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from categories import Categories as cat
-from preprocessing.nltk_preprocessor import NLTKPreprocessor
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 import string
@@ -18,10 +14,6 @@ from file_handling.file_handler import FileHandler
 #nltk.download('punkt')
 
 disturb_chars = '([\/+]|\s{3,})' #regex
-
-#filepath = '/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv'
-#filepath = 'C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv'
-
 
 class StemTokenizer(object):
     def __init__(self):
@@ -48,7 +40,6 @@ class FeatureExtractor:
         only columns category, bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
-        #df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "ISO-8859-1", delimiter=',')
         df = self.file_handler.read_csv()
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
@@ -62,17 +53,12 @@ class FeatureExtractor:
 
         return word_counts, targets
 
-    def extract_example_features(self, examples):
-        # df = pandas.DataFrame({'text': [' '.join(examples[0:3])], 'class': []})
-        #df = DataFrame({'text': []})
-        #df['text'] = [' '.join(examples[0:3])]
-
-        example_counts = self.vectorizer.transform([' '.join(examples[0:3])])
+    def extract_termlist_features(self, term_list):
+        example_counts = self.vectorizer.transform([' '.join(term_list[0:3])])
 
         return example_counts
 
     def fetch_data(self):
-        #df = pandas.read_csv(filepath_or_buffer=filepath, encoding = "UTF-8", delimiter=',')
         df = self.file_handler.read_csv()
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
@@ -100,4 +86,3 @@ class FeatureExtractor:
 #sbs = SnowballStemmer('german')
 #print(wln_test.lemmatize('Statistik'))
 #print(sbs.stem('Statistik'))
-

@@ -50,7 +50,7 @@ class NBClassifier:
         #    counts, targets = feature_extraction.extract_features()
 
         classifier.fit(counts, targets)  # train the classifier
-        example_counts = feature_extractor.extract_example_features(term_list)
+        example_counts = feature_extractor.extract_termlist_features(term_list)
         # example_counts = count_vectorizer.transform(fields)
 
         predict_probabilities = classifier.predict_proba(example_counts)

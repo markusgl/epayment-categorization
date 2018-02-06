@@ -44,13 +44,16 @@ class BookingClassifier:
         Classify examples and print prediction result
         :param: booking as list of owner, text and usage
         """
+        # check if creditor_id is already known
         category = self.match_creditor_id()
         if category != -1:
             return category
 
         # TODO SEPA Purpose Code
+        # check if creditor_id is in purpose code
 
-        word_counts = self.feature_extractor.extract_example_features(term_list)
+        # othwerwise start text analysis
+        word_counts = self.feature_extractor.extract_termlist_features(term_list)
         predict_probabilities = self.clf.predict_proba(word_counts)
         #category = self.clf.predict(example_counts)
 

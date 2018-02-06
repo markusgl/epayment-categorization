@@ -14,7 +14,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, \
-    cross_validate, cross_val_predict, KFold, LeaveOneOut
+    cross_validate, cross_val_predict, LeaveOneOut
+from sklearn.cross_validation import KFold
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -116,9 +117,33 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
     # K-folds cross validation
     #text, targets = FeatureExtractor().fetch_data()
     kc_scores = []
-    kf = KFold(n_splits=25)
-    loo = LeaveOneOut()
-    loo.get_n_splits(counts)
+    #kf = KFold(n_splits=15)
+    kf = KFold(n=1062, n_folds=6)
+    #loo = LeaveOneOut()
+    #loo.get_n_splits(counts)
+
+    confusion = np.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+                          [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+                          [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
+                          [0, 0, 0, 0, 0, 0, 0]])
+
+
+
+    for train_indices, test_indices in kf:
+        train_text = counts[train_indices]
+        train_y = targets[train_indices]
+
+        test_text = counts[test_indices]
+        test_y = targets[test_indices]
+
+        clf.fit(train_text, train_y)
+        predictions = clf.predict(test_text)
+
+        confusion += confusion_matrix(test_y, predictions)
+        score = accuracy_score(test_y, predictions)
+        kc_scores.append(score)
+
+    """
     for train_indices, test_indices in loo.split(counts):
         train_text = counts[train_indices]
         train_y = targets[train_indices]
@@ -129,9 +154,10 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
         clf.fit(train_text, train_y)
         predictions_k = clf.predict(test_text)
 
+        confusion += confusion_matrix(test_y, predictions_k)
         k_score = accuracy_score(test_y, predictions_k)
         kc_scores.append(k_score)
-
+    """
     print("K-Folds score: ", sum(kc_scores)/len(kc_scores))
 
     scores = cross_val_score(clf, counts, targets, cv=50, scoring='accuracy')
@@ -141,15 +167,10 @@ def classify(plot=False, multinomial_nb=False, bernoulli_nb=False, knn=False, su
     print(scores)
     print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
-    """
-    confusion = np.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0]])
+    # confusion matrix train test split
+    #confusion += confusion_matrix(y_test, predictions)
+    #print(confusion)
 
-    confusion += confusion_matrix(y_test, predictions)
-    print(confusion)
-    """
 
     if plot:
         Plotter.plot_and_show_confusion_matrix(confusion,
@@ -194,10 +215,12 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
         parameters = {
             'vect__max_df': (0.5, 0.75, 1.0),
             'vect__ngram_range': N_GRAMS,
+            'vect__analyer':'word',
             #'tfidf__max_df': MAX_DF,
             #'tfidf__ngram_range': N_GRAMS,
             #'tfidf__sublinear_tf': (True, False),
             #'tfidf__use_idf': (True, False),
+            'tfidf_norm': ('l1', 'l2'),
             'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001),
             'clf__binarize': (0.0, 0.1, 0.2, 0.5)
         }
@@ -210,7 +233,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
             #'tfidf__ngram_range': N_GRAMS,
             #'tfidf__sublinear_tf': (True, False),
             #'tfidf__use_idf': (True, False),
-            #'clf__n_neighbours': (2, 3, 4, 5, 6, 7, 8, 9, 10),
+            'clf__n_neighbours': range(2, 31),
             'clf__weights': ('uniform', 'distance'),
             'clf__algorithm': ('auto', 'ball_tree', 'kd_tree', 'brute'),
             'clf__leaf_size': (20, 30, 40)
@@ -225,16 +248,18 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
             'tfidf__sublinear_tf': (True, False),
             'tfidf__use_idf': (True, False),
             'clf__kernel': ('linear', 'sigmoid', 'rbf', 'poly'),
+            'clv__decision_function_shape': ('ovo', 'ovr'),
             'clf__C': (1, 10, 100, 1000),
-            'clf__gamma': (1e-3, 1e-4)
+            'clf__gamma': (0.6, 0.8, 1.0, 1.2)
         }
     elif support_vmsgd:
+        CLF = SGDClassifier()
         parameters = {
             #'vect__max_df': (0.5, 0.75, 1.0),
             #'vect__ngram_range': N_GRAMS,
             'tfidf__max_df': MAX_DF,
             'tfidf__ngram_range': N_GRAMS,
-            'tfidf__analyzer': 'word',
+            'tfidf__analyzer': ('word', 'char'),
             'tfidf__sublinear_tf': (True, False),
             'tfidf__use_idf': (True, False),
             'clf__loss': ('hinge', 'modified_huber', 'squared_hinge'),
@@ -257,15 +282,16 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     #plot.grid_search(clf.grid_scores_, change='n_estimators', kind='bar')
 
     # perform grid search on pipeline
-    grid_search = GridSearchCV(pipeline, param_grid = parameters, n_jobs=-1,
-                               verbose=10, cv=25)
+    grid_search = GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1,
+                               verbose=10, cv=10)
 
     print("parameters:")
     pprint(parameters)
+    # learn vocabulary
     grid_search.fit(booking_data, booking_targets)
 
     print()
-    print("best_param: " + str(grid_search.best_params_))
+    print("Best parameters: " + str(grid_search.best_params_))
     print("Best score: %0.3f" % grid_search.best_score_)
     print("Best parameters set:")
     best_parameters = grid_search.best_estimator_.get_params()
@@ -313,11 +339,11 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     plt.show()
     """
 
-classify(support_vm=True)
+classify(support_vm=True, plot=True)
 #classify(hyperparam_estim=True)
 #classify(logistic_regression=True)
 #classify(gridsearch=True)
-#estimate_parameters(support_vm=True)
+#estimate_parameters(support_vmsgd=True)
 
 #booking_data, booking_targets = FeatureExtractor().fetch_data()
 #print(type(booking_data))
