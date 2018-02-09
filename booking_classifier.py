@@ -33,31 +33,34 @@ class BookingClassifier:
             self._train_classifier()
 
     def match_creditor_id(self, booking):
-        if booking.creditor_id:
+        try:
             regex = re.compile(booking.creditor_id, re.IGNORECASE)
             db_entry = self.db.companies.find_one({"creditorid": regex})
             return db_entry['category']
-        return -1
+        except:
+            return -1
 
-    def classify(self, term_list):
+    def classify(self, booking):
         """
         Classify examples and print prediction result
         :param: booking as list of owner, text and usage
         """
         # check if creditor_id is already known
-        category = self.match_creditor_id()
+        category = self.match_creditor_id(booking)
         if category != -1:
             return category
 
         # TODO SEPA Purpose Code
         # check if creditor_id is in purpose code
 
-        # othwerwise start text analysis
+        # start text analysis
+        term_list = booking.text +  ' ' + booking.usage + ' ' + booking.owner
         word_counts = self.feature_extractor.extract_termlist_features(term_list)
         predict_probabilities = self.clf.predict_proba(word_counts)
         #category = self.clf.predict(example_counts)
 
 
+        # if max prediction probability is less than 70% assume that the booking category is unknown
         print(max(max(predict_probabilities)))
         if max(max(predict_probabilities)) < 0.7:
             category = str(fbcat.SONSTIGES.name) # fallback category

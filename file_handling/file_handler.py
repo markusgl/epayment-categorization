@@ -18,4 +18,5 @@ class FileHandler():
         booking_props = booking.to_array()
         with open(self.filepath, 'a') as file:
             writer = csv.writer(file)
+            # TODO check if linebreak already exists before adding one
             writer.writerow(booking_props)

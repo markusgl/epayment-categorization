@@ -1,11 +1,12 @@
-""" class an schema for a bank booking """
+""" schema for a bank booking """
 
 from marshmallow import Schema, fields, pprint, post_load
 
 
 class Booking:
-    def __init__(self, category, booking_date, valuta_date, text, usage,
-                 creditor_id=None, owner=None, iban=None, bic=None, amount=None, id=None):
+    def __init__(self, category=None, booking_date=None, valuta_date=None,
+                 text=None, usage=None, creditor_id=None, owner=None,
+                 iban=None, bic=None, amount=None):
         self.category = category
         self.booking_date = booking_date
         self.valuta_date = valuta_date
@@ -36,10 +37,25 @@ class BookingSchema(Schema):
     amount = fields.Float(required=True)
 
     @post_load
-    def make_user(self, data):
+    def make_booking(self, data):
         return Booking(**data)
 
 
+class BookingCatSchema(Schema):
+    category = fields.Str(required=True)
+    booking_date = fields.Date()
+    valuta_date = fields.Date()
+    text = fields.Str(required=True)
+    usage = fields.Str(required=True)
+    creditor_id = fields.Str()
+    owner = fields.Str(required=True)
+    iban = fields.Str()
+    bic = fields.Str()
+    amount = fields.Float()
+
+    @post_load
+    def make_booking(self, data):
+        return Booking(**data)
 
 '''
 b1 = dict(category='wohnenhaushalt', booking_date='01.09.2017', valuta_date='01.09.2017',
@@ -56,6 +72,10 @@ req_data = {'category':'wohnenhaushalt', 'booking_date':'01.09.2017', 'valuta_da
 
 #booking_schema = BookingSchema()
 #booking, errors = booking_schema.load(req_data)
+
+#print(booking.to_array())
+
+
 #if errors:
 #    print(errors)
 #else:
