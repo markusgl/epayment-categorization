@@ -29,8 +29,8 @@ from categories import Categories as cat
 from comparison.plotter import Plotter
 from feature_extraction import FeatureExtractor
 import matplotlib.pyplot as plt
-from sklearn.decomposition import pca, TruncatedSVD
-from sklearn.preprocessing import Normalizer, label_binarize
+from sklearn.decomposition import pca, TruncatedSVD, PCA
+from sklearn.preprocessing import Normalizer, label_binarize, StandardScaler
 from collections import Counter
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,

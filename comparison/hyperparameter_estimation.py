@@ -22,16 +22,21 @@ def plot_validation_curve():
     pipeline = Pipeline([
         #('clf', MultinomialNB())
         ('clf', SGDClassifier())
+        #('clf', SVC(kernel='sigmoid'))
     ])
     #param_range = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
     #param_range = [1.0, 1.2, 1.4, 1.6]
-    param_range = [0.01, 0.001, 0.0001]
+    #param_range = [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.0000001]
+    param_range = 10.0**-np.arange(1,7)
+    #param_range = [1, 10, 100, 1000]
 
     train_scores, test_scores = validation_curve(estimator=pipeline, X=X_train,
                                                  y=y_train,
                                                  param_name='clf__alpha',
                                                  param_range=param_range,
                                                  cv=10)
+    print(train_scores)
+    print(test_scores)
     train_mean = np.mean(train_scores, axis=1)
     train_std = np.std(train_scores, axis=1)
     test_mean = np.mean(test_scores, axis=1)
@@ -56,55 +61,32 @@ def plot_validation_curve():
     plt.grid()
     plt.xscale('log')
     plt.legend(loc='lower right')
-    plt.xlabel('Parameter gamma')
+    plt.xlabel('Parameter alpha')
     plt.ylabel('Accuracy')
-    plt.ylim([0.8, 1.0])
+    plt.ylim([0.2, 1.0])
     plt.show()
 
 
 def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=False, support_vm=False, support_vmsgd=False):
     fe = FeatureExtractor()
     counts, targets = fe.fetch_data()
-    #counts, targets = FeatureExtractor().extract_features_from_csv()
-    #X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=1)
 
-    MAX_DF = [0.5, 0.75, 1.0]
+    MAX_DF = [0.0, 0.25, 0.5, 0.75, 1.0]
     N_GRAMS = [(1, 1), (1, 2), (1, 3)]
 
     if multinomial_nb:
         CLF = MultinomialNB()
         parameters = {
-            'vect__max_df': (0.5, 0.75, 1.0),
-            #'vect__ngram_range': N_GRAMS,
-            #'tfidf__max_df': MAX_DF,
-            #'tfidf__ngram_range': N_GRAMS,
-            #'tfidf__sublinear_tf': (True, False),
-            #'tfidf__use_idf': (True, False),
             'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
         }
     elif bernoulli_nb:
         CLF = BernoulliNB()
         parameters = {
-            #'vect__max_df': (0.5, 0.75, 1.0),
-            #'vect__ngram_range': N_GRAMS,
-            #'vect__analyer': ('word', 'char', 'char_wb'),
-            'tfidf__max_df': MAX_DF,
-            'tfidf__ngram_range': N_GRAMS,
-            'tfidf__sublinear_tf': (True, False),
-            'tfidf__use_idf': (True, False),
-            #'tfidf_norm': ('l1', 'l2'),
             'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
-            #'clf__binarize': (0.0, 0.1, 0.2, 0.5)
         }
     elif k_nearest:
         CLF = KNeighborsClassifier()
         parameters = {
-            #'vect__max_df': (0.5, 0.75, 1.0),
-            #'vect__ngram_range': N_GRAMS,
-            'tfidf__max_df': MAX_DF,
-            'tfidf__ngram_range': N_GRAMS,
-            'tfidf__sublinear_tf': (True, False),
-            'tfidf__use_idf': (True, False),
             'clf__n_neighbors': range(2, 10),
             'clf__weights': ('uniform', 'distance'),
             'clf__algorithm': ('auto', 'brute'),
@@ -113,15 +95,6 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=Fals
     elif support_vm:
         CLF = SVC()
         parameters = {
-            #'vect__max_df': (0.5, 0.75, 1.0),
-            #'vect__ngram_range': N_GRAMS,
-            'tfidf__max_features': (1, 2, 3),
-            'tfidf__max_df': MAX_DF,
-            'tfidf__ngram_range': N_GRAMS,
-            'tfidf__sublinear_tf': (True, False),
-            'tfidf__use_idf': (True, False),
-            'tfidf__norm': ('l1', 'l2', None),
-            'tfidf__smooth_idf': (True, False),
             'clf__kernel': ('linear', 'sigmoid', 'rbf', 'poly'),
             'clf__decision_function_shape': ('ovo', 'ovr'),
             'clf__C': (1, 10, 100),
@@ -130,21 +103,26 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=Fals
     elif support_vmsgd:
         CLF = SGDClassifier(max_iter=1000)
         parameters = {
-            #'vect__max_df': (0.5, 0.75, 1.0),
-            #'vect__ngram_range': N_GRAMS,
-            'tfidf__max_df': MAX_DF,
-            'tfidf__ngram_range': N_GRAMS,
-            'tfidf__analyzer': ('word', 'char'),
-            'tfidf__sublinear_tf': (True, False),
-            'tfidf__use_idf': (True, False),
             'clf__loss': ('hinge', 'modified_huber', 'squared_hinge'),
             'clf__penalty': ('l1', 'l2', 'elasticnet'),
-            'clf__alpha': (0.01, 0.001, 0.0001),
+            'clf__alpha': 10.0**-np.arange(1,7),
             'clf__tol': (0.2, 1e-2, 1e-3, 1e-4)
         }
     else:
         print('Please provide one which algorithm to use')
         return
+
+    # add parameters for feature extraction
+    parameters.update({
+            'vect__max_df': MAX_DF,
+            'vect__ngram_range': N_GRAMS,
+            'tfidf__max_df': MAX_DF,
+            'tfidf__ngram_range': N_GRAMS,
+            'tfidf__analyzer': ('word', 'char'),
+            #'tfidf__sublinear_tf': (True, False),
+            #'tfidf__use_idf': (True, False),
+            'tfidf__norm': ('l1', 'l2', None)
+            })
 
     pipeline = Pipeline([
         #('vect', CountVectorizer()),
@@ -172,5 +150,5 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=Fals
     """
 
 
-#estimate_parameters(support_vm=True)
-plot_validation_curve()
+estimate_parameters(support_vmsgd=True)
+#plot_validation_curve()

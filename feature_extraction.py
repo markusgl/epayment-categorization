@@ -41,7 +41,8 @@ class FeatureExtractor:
         only columns category, bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
-        df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
         #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
 
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
@@ -62,7 +63,9 @@ class FeatureExtractor:
         return example_counts
 
     def fetch_data(self):
-        df = self.file_handler.read_csv('C:/tmp/Labeled_transactions_sorted_same_class_amount.csv')
+        #df = self.file_handler.read_csv('C:/tmp/Labeled_transactions_sorted_same_class_amount.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_sorted_same_class_amount.csv')
+
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
