@@ -20,20 +20,21 @@ def plot_validation_curve():
     X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=1)
 
     pipeline = Pipeline([
-        #('clf', BernoulliNB())
-        ('clf', KNeighborsClassifier())
+        ('clf', SGDClassifier())
     ])
     #param_range = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
     #param_range = [1.0, 1.2, 1.4, 1.6]
     #param_range = [0.0001, 0.00001, 0.000001, 0.0000001, 0.0000001, 0.00000001, 0.000000001, 1e-10]
     #param_range = 10.0**-np.arange(5,11)
-    #param_range = [1, 10, 100, 1000]
-    param_range = (20, 30, 40)
-
+    #param_range = np.logspace(-9, 3, 13)
+    #param_range = [1000, 10000, 100000]
+    #param_range = 10.0**-np.arange(1,8)
+    #param_range = [np.ceil(10**6 / 1062)]
+    param_range = [0.0, 0.2, 0.5, 0.7]
 
     train_scores, test_scores = validation_curve(estimator=pipeline, X=X_train,
                                                  y=y_train,
-                                                 param_name='clf__leaf_size',
+                                                 param_name='clf__eta0',
                                                  param_range=param_range,
                                                  cv=10)
     print(train_scores)
@@ -102,16 +103,20 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
         parameters = {
             'clf__kernel': ('linear', 'sigmoid', 'rbf', 'poly'),
             'clf__decision_function_shape': ('ovo', 'ovr'),
-            'clf__C': (1, 10, 100),
-            'clf__gamma': (1.0, 1.2, 1.4, 1.6)
+            'clf__C': (100, 1000, 10000, 100000, 1000000),
+            'clf__gamma': (0.001, 0.01, 0.1, 1)
         }
     elif support_vmsgd:
         CLF = SGDClassifier(max_iter=1000)
         parameters = {
             'clf__loss': ('hinge', 'modified_huber', 'squared_hinge'),
             'clf__penalty': ('l1', 'l2', 'elasticnet'),
-            'clf__alpha': 10.0**-np.arange(1,7),
-            'clf__tol': (0.2, 1e-2, 1e-3, 1e-4)
+            'clf__alpha': 10.0**-np.arange(1,8),
+            'clf__tol': (0.3, 0.2, 1e-2, 1e-3, 1e-4),
+            'clf__n_iter': np.ceil(10**6 / 1062),
+            'clf__eta0': (0.0, 0.2, 0.5, 0.7),
+            'clf__learning_rage': ('constant', 'optimal', 'invscaling'),
+            'clf__average': (True, False)
         }
     else:
         print('Please provide one which algorithm to use')
@@ -161,5 +166,5 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
 
 
 
-estimate_parameters(k_nearest=True, tfidf=True)
+estimate_parameters(support_vm=True, tfidf=True)
 #plot_validation_curve()
