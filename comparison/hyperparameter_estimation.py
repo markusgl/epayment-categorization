@@ -20,19 +20,20 @@ def plot_validation_curve():
     X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=1)
 
     pipeline = Pipeline([
-        #('clf', MultinomialNB())
-        ('clf', SGDClassifier())
-        #('clf', SVC(kernel='sigmoid'))
+        #('clf', BernoulliNB())
+        ('clf', KNeighborsClassifier())
     ])
     #param_range = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
     #param_range = [1.0, 1.2, 1.4, 1.6]
-    #param_range = [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.0000001]
-    param_range = 10.0**-np.arange(1,7)
+    #param_range = [0.0001, 0.00001, 0.000001, 0.0000001, 0.0000001, 0.00000001, 0.000000001, 1e-10]
+    #param_range = 10.0**-np.arange(5,11)
     #param_range = [1, 10, 100, 1000]
+    param_range = (20, 30, 40)
+
 
     train_scores, test_scores = validation_curve(estimator=pipeline, X=X_train,
                                                  y=y_train,
-                                                 param_name='clf__alpha',
+                                                 param_name='clf__leaf_size',
                                                  param_range=param_range,
                                                  cv=10)
     print(train_scores)
@@ -67,22 +68,26 @@ def plot_validation_curve():
     plt.show()
 
 
-def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=False, support_vm=False, support_vmsgd=False):
+def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
+                        k_nearest=False, support_vm=False, support_vmsgd=False,
+                        bow=False, tfidf=False):
     fe = FeatureExtractor()
     counts, targets = fe.fetch_data()
 
-    MAX_DF = [0.0, 0.25, 0.5, 0.75, 1.0]
-    N_GRAMS = [(1, 1), (1, 2), (1, 3)]
+    MAX_DF = [0.25, 0.5, 0.75, 1.0]
+    N_GRAMS = [(1, 1), (1, 2), (1, 3), (1, 4)]
 
     if multinomial_nb:
         CLF = MultinomialNB()
         parameters = {
-            'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
+            #'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
+            'clf__alpha': 10.0 ** -np.arange(5, 11)
         }
     elif bernoulli_nb:
         CLF = BernoulliNB()
         parameters = {
-            'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
+            #'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
+            'clf__alpha': 10.0 ** -np.arange(5, 11)
         }
     elif k_nearest:
         CLF = KNeighborsClassifier()
@@ -112,29 +117,41 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=Fals
         print('Please provide one which algorithm to use')
         return
 
-    # add parameters for feature extraction
-    parameters.update({
+    # add feature extraction params and classifier to pipeline
+    if bow:
+        parameters.update({
             'vect__max_df': MAX_DF,
-            'vect__ngram_range': N_GRAMS,
+            'vect__ngram_range': N_GRAMS
+            })
+
+        pipeline = Pipeline([
+            ('vect', CountVectorizer()),
+            ('clf', CLF)
+        ])
+    elif tfidf:
+        parameters.update({
             'tfidf__max_df': MAX_DF,
             'tfidf__ngram_range': N_GRAMS,
             'tfidf__analyzer': ('word', 'char'),
-            #'tfidf__sublinear_tf': (True, False),
-            #'tfidf__use_idf': (True, False),
+            'tfidf__sublinear_tf': (True, False),
+            'tfidf__use_idf': (True, False),
             'tfidf__norm': ('l1', 'l2', None)
             })
 
-    pipeline = Pipeline([
-        #('vect', CountVectorizer()),
-        ('tfidf', TfidfVectorizer()),
-        ('clf', CLF)
-    ])
+        pipeline = Pipeline([
+            ('tfidf', TfidfVectorizer()),
+            ('clf', CLF)
+        ])
+    else:
+        print('Please provide one which algorithm to use')
+        return
 
     # perform grid search on pipeline
-    grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters, verbose=10,
-                               cv=15, scoring='accuracy')
+    grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters,
+                               cv=15, scoring='accuracy', verbose=2)
     print("parameters:")
     pprint(parameters)
+    print("Starting grid search. This may take some time...")
 
     # learn vocabulary
     grid_search.fit(counts, targets)
@@ -142,13 +159,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False, k_nearest=Fals
     print("Best parameters: " + str(grid_search.best_params_))
     print("Best score: %0.3f" % grid_search.best_score_)
 
-    """
-    print("Best parameters set:")
-    best_parameters = grid_search.best_estimator_.get_params()
-    for param_name in sorted(parameters.keys()):
-        print((param_name, best_parameters[param_name]))
-    """
 
 
-estimate_parameters(support_vmsgd=True)
+estimate_parameters(k_nearest=True, tfidf=True)
 #plot_validation_curve()

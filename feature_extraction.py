@@ -13,12 +13,13 @@ import editdistance
 
 #nltk.download('wordnet')
 #nltk.download('punkt')
+nltk.download('stopwords')
 
 disturb_chars = '([\/+]|\s{3,})' #regex
 
 class StemTokenizer(object):
     def __init__(self):
-        self.sbs = SnowballStemmer('german')
+        self.sbs = SnowballStemmer('german', ignore_stopwords=True)
 
     def __call__(self, doc):
         # TreeBankTokenizer
