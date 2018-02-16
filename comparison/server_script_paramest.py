@@ -1,92 +1,58 @@
-from pprint import pprint
-
-
+import nltk
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.learning_curve import validation_curve
 from sklearn.linear_model import SGDClassifier
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
+import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
-import numpy as np
-from feature_extraction import FeatureExtractor
-import matplotlib.pyplot as plt
+import pandas
+import re
 
+nltk.download('stopwords')
+disturb_chars = '([\/+]|\s{3,})' #regex
 
-def plot_validation_curve():
-    counts, targets = FeatureExtractor(ngramrange=(1,4), maxdf=0.5, useidf=False, sublinear=True).extract_features_from_csv
-    # split data into test and training set - hold 20% out for testing
-    X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=1)
+class StemTokenizer(object):
+    def __init__(self):
+        self.sbs = nltk.SnowballStemmer('german', ignore_stopwords=True)
 
-    pipeline = Pipeline([
-        #('clf', BernoulliNB())
-        ('clf', SGDClassifier())
-    ])
-
-    param_range = (20, 30, 40, 50, 60)
-
-
-    train_scores, test_scores = validation_curve(estimator=pipeline, X=X_train,
-                                                 y=y_train,
-                                                 param_name='clf__max_iter',
-                                                 param_range=param_range,
-                                                 cv=10)
-    print(train_scores)
-    print(test_scores)
-    train_mean = np.mean(train_scores, axis=1)
-    train_std = np.std(train_scores, axis=1)
-    test_mean = np.mean(test_scores, axis=1)
-    test_std = np.std(test_scores, axis=1)
-    plt.plot(param_range, train_mean,
-             color='blue', marker='o',
-             markersize=5,
-             label='training accuracy')
-    plt.fill_between(param_range, train_mean + train_std,
-                     train_mean - train_std, alpha=0.15,
-                     color='blue')
-    plt.plot(param_range, test_mean,
-             color='green', linestyle='--',
-             marker='s', markersize=5,
-             label='validation accuracy')
-    plt.fill_between(param_range,
-                     test_mean + test_std,
-                     test_mean - test_std,
-                     alpha=0.15, color='green')
-
-
-    plt.grid()
-    plt.xscale('log')
-    plt.legend(loc='lower right')
-    plt.xlabel('Parameter alpha')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.2, 1.0])
-    plt.show()
+    def __call__(self, doc):
+        # TreeBankTokenizer
+        return [self.sbs.stem(t) for t in nltk.word_tokenize(doc)]
 
 
 def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
                         k_nearest=False, support_vm=False, support_vmsgd=False,
                         bow=False, tfidf=False):
-    fe = FeatureExtractor()
-    counts, targets = fe.fetch_data()
+
+    df = pandas.read_csv(filepath_or_buffer='/var/booking_categorizer/Labeled_transactions_sorted_same_class_amount.csv', delimiter=',')
+    #df['values'] = ' '.join((df.bookingtext, df.usage, df.owner)).encode('latin-1').decode('latin-1').lower().replace(disturb_chars, ' ')
+    df['values'] =  df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
+
+    targets = df['category'].values
+    counts = df['values'].values.astype(str)
 
     MAX_DF = [0.25, 0.5, 0.75, 1.0]
     N_GRAMS = [(1, 1), (1, 2), (1, 3), (1, 4)]
 
     if multinomial_nb:
         CLF = MultinomialNB()
+        clf_name = "MultinomialNB"
         parameters = {
-            #'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
             'clf__alpha': 10.0 ** -np.arange(5, 11)
         }
     elif bernoulli_nb:
         CLF = BernoulliNB()
+        clf_name = "BernoulliNB"
         parameters = {
-            #'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
             'clf__alpha': 10.0 ** -np.arange(5, 11)
         }
     elif k_nearest:
         CLF = KNeighborsClassifier()
+        clf_name = "KNN"
         parameters = {
             'clf__n_neighbors': range(2, 10),
             'clf__weights': ('uniform', 'distance'),
@@ -95,6 +61,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
         }
     elif support_vm:
         CLF = SVC()
+        clf_name = "SVC"
         parameters = {
             'clf__kernel': ('linear', 'sigmoid', 'rbf', 'poly'),
             'clf__decision_function_shape': ('ovo', 'ovr'),
@@ -103,6 +70,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
         }
     elif support_vmsgd:
         CLF = SGDClassifier(max_iter=50)
+        clf_name = "SGDClassifier"
         parameters = {
             'clf__loss': ('hinge', 'modified_huber', 'squared_hinge'),
             'clf__penalty': ('l1', 'l2', 'elasticnet'),
@@ -145,9 +113,9 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     # perform grid search on pipeline
     grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters,
                                cv=15, scoring='accuracy')
-    print("parameters:")
-    pprint(parameters)
-    print("Starting grid search. This may take some time...")
+
+    with open('/var/booking_categorizer/gridsearch_log', 'a') as file:
+        file.write("Starting gridsearch\n")
 
     # learn vocabulary
     grid_search.fit(counts, targets)
@@ -155,10 +123,14 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     print("Best parameters: " + str(grid_search.best_params_))
     print("Best score: %0.3f" % grid_search.best_score_)
 
-    filename = '/var/booking_categorizer/'
+    filename = '/var/booking_categorizer/gridsearch_result'
     with open(filename, 'a') as file:
-        file.write("Best parameters: " + str(grid_search.best_params_) + "\n" +
-                   "Best score: %0.3f" % grid_search.best_score_)
+        file.write("------------------------------" + "\n" +
+                    clf_name + "\n" +
+                    "Best parameters: " + str(grid_search.best_params_) + "\n" +
+                   "Best score: %0.3f" % grid_search.best_score_  + "\n")
 
-#estimate_parameters(k_nearest=True, tfidf=True)
-plot_validation_curve()
+estimate_parameters(k_nearest=True, tfidf=True)
+#estimate_parameters(support_vm=True, tfidf=True)
+#estimate_parameters(support_vmsgd=True, bow=True)
+#estimate_parameters(support_vmsgd=True, tfidf=True)

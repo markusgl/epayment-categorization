@@ -1,5 +1,6 @@
 
 import numpy as np
+from nltk import WhitespaceTokenizer
 from pymongo import MongoClient
 from sklearn.externals import joblib
 from sklearn.linear_model import SGDClassifier
@@ -50,15 +51,20 @@ class BookingClassifier:
         if category != -1:
             return category
 
-        # TODO SEPA Purpose Code
         # check if creditor_id is in purpose code
+        wst = WhitespaceTokenizer()
+        tokens = wst.tokenize(booking.usage)
+        try:
+            print(tokens[tokens.index("Einreicher-ID") + 1])
+            booking.creditor_id = tokens[tokens.index("Einreicher-ID") + 1]
+        except ValueError:
+            print("No SEPA purpose code found")
 
         # start text analysis
-        term_list = booking.text +  ' ' + booking.usage + ' ' + booking.owner
+        term_list = booking.text + ' ' + booking.usage + ' ' + booking.owner
         word_counts = self.feature_extractor.extract_termlist_features(term_list)
         predict_probabilities = self.clf.predict_proba(word_counts)
         #category = self.clf.predict(example_counts)
-
 
         # if max prediction probability is less than 70% assume that the booking category is unknown
         print(max(max(predict_probabilities)))
@@ -84,7 +90,7 @@ class BookingClassifier:
         #clf = SGDClassifier(loss='log', max_iter=100, tol=None, shuffle=True)
         feature_extractor = FeatureExtractor()
 
-        counts, targets = feature_extractor.extract_features_from_csv()
+        counts, targets = feature_extractor.extract_features_from_csv
         print('start training...')
         clf.fit(counts, targets) # train the classifier
         print('training finished. start dumping model...')

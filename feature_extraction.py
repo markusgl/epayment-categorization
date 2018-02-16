@@ -10,12 +10,13 @@ from booking import Booking
 import scipy as sp
 from file_handling.file_handler import FileHandler
 import editdistance
+import pandas as pd
 
 #nltk.download('wordnet')
 #nltk.download('punkt')
 nltk.download('stopwords')
-
 disturb_chars = '([\/+]|\s{3,})' #regex
+
 
 class StemTokenizer(object):
     def __init__(self):
@@ -27,15 +28,21 @@ class StemTokenizer(object):
 
 
 class FeatureExtractor:
-    def __init__(self, ngramrange=None, maxdf=0.0, useidf=False, sublinear=False):
+    def __init__(self, vectorizer):
         self.file_handler = FileHandler()
-        self.vectorizer = TfidfVectorizer(tokenizer=StemTokenizer(),
-                                          ngram_range=ngramrange,
-                                          analyzer='word',
-                                          sublinear_tf=sublinear,
-                                          use_idf=useidf,
-                                          max_df=maxdf)
+        self.vectorizer = vectorizer
 
+    @classmethod
+    def bow(cls, **kwargs):
+        vectorizer = CountVectorizer(**kwargs)
+        return cls(vectorizer)
+
+    @classmethod
+    def tfidf(cls, **kwargs):
+        vectorizer = TfidfVectorizer(**kwargs)
+        return cls(vectorizer)
+
+    @property
     def extract_features_from_csv(self):
         """
         builds a pandas data frame from csv file (semicolon separated)
@@ -46,9 +53,13 @@ class FeatureExtractor:
         df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
         #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
 
-        df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
-                     ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
-                     ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
+        #df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
+        #             ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
+        #             ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
+        df['values'] = df[['bookingtext', 'usage', 'owner']].astype(str)\
+                                                            .sum(axis=1)\
+                                                            .replace(disturb_chars, ' ')\
+                                                            .str.lower()
 
         targets = df['category'].values
 

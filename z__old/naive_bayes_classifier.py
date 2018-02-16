@@ -45,7 +45,7 @@ class NBClassifier:
 
         # feature vector and target vector
         #if tfidf:
-        counts, targets = feature_extractor.extract_features_from_csv()
+        counts, targets = feature_extractor.extract_features_from_csv
         #else:
         #    counts, targets = feature_extraction.extract_features()
 
