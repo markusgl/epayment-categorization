@@ -130,6 +130,10 @@ def feedback():
             add_booking(booking)
     return "Thanks for the feedback", 200
 
+@app.route("/classifyform", methods=['GET'])
+def form():
+    return render_template('inputformhtml'), 200
+
 if __name__ == '__main__':
     #app.session_interface = ItsdangerousSessionInterface()
     app.session_interface = SecureCookieSessionInterface()

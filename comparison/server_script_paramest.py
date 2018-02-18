@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 import pandas
-import re
+import argparse
 
 nltk.download('stopwords')
 disturb_chars = '([\/+]|\s{3,})' #regex
@@ -27,7 +27,6 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
                         bow=False, tfidf=False):
 
     df = pandas.read_csv(filepath_or_buffer='/var/booking_categorizer/Labeled_transactions_sorted_same_class_amount.csv', delimiter=',')
-    #df['values'] = ' '.join((df.bookingtext, df.usage, df.owner)).encode('latin-1').decode('latin-1').lower().replace(disturb_chars, ' ')
     df['values'] =  df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
@@ -69,7 +68,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
             'clf__gamma': (1.0, 1.2, 1.4, 1.6)
         }
     elif support_vmsgd:
-        CLF = SGDClassifier(max_iter=50)
+        CLF = SGDClassifier(max_iter=100)
         clf_name = "SGDClassifier"
         parameters = {
             'clf__loss': ('hinge', 'modified_huber', 'squared_hinge'),
@@ -114,8 +113,9 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters,
                                cv=15, scoring='accuracy')
 
+    print("Starting gridsearch with "+ str(clf_name))
     with open('/var/booking_categorizer/gridsearch_log', 'a') as file:
-        file.write("Starting gridsearch\n")
+        file.write("Starting gridsearch " + str(clf_name) + "\n")
 
     # learn vocabulary
     grid_search.fit(counts, targets)
@@ -123,14 +123,14 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     print("Best parameters: " + str(grid_search.best_params_))
     print("Best score: %0.3f" % grid_search.best_score_)
 
-    filename = '/var/booking_categorizer/gridsearch_result'
+    filename = '/var/booking_categorizer/gridsearch_result_' + str(clf_name)
     with open(filename, 'a') as file:
         file.write("------------------------------" + "\n" +
                     clf_name + "\n" +
                     "Best parameters: " + str(grid_search.best_params_) + "\n" +
                    "Best score: %0.3f" % grid_search.best_score_  + "\n")
 
-estimate_parameters(k_nearest=True, tfidf=True)
-#estimate_parameters(support_vm=True, tfidf=True)
+#estimate_parameters(k_nearest=True, tfidf=True)
+estimate_parameters(support_vm=True, tfidf=True)
 #estimate_parameters(support_vmsgd=True, bow=True)
 #estimate_parameters(support_vmsgd=True, tfidf=True)

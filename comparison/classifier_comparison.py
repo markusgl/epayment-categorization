@@ -19,8 +19,8 @@ from sklearn.metrics import confusion_matrix, classification_report, \
     f1_score, precision_score, recall_score, average_precision_score, \
     precision_recall_curve, jaccard_similarity_score
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, \
-    cross_validate, cross_val_predict, LeaveOneOut
-from sklearn.cross_validation import KFold, StratifiedKFold
+    cross_validate, cross_val_predict, LeaveOneOut, StratifiedKFold
+#from sklearn.cross_validation import KFold
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -107,8 +107,8 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
         else: #TODO
             vectorizer_title = 'TF-IDF'
             counts, targets = FeatureExtractor.tfidf(analyzer='word',
-                                                     max_df=0.25,
-                                                     ngram_range=(1,3),
+                                                     max_df=0.5,
+                                                     ngram_range=(1,1),
                                                      norm='l1',
                                                      sublinear_tf=True,
                                                      use_idf=True).extract_features_from_csv
@@ -125,9 +125,9 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
         else: #TODO
             vectorizer_title = 'TF-IDF'
             counts, targets = FeatureExtractor.tfidf(ngram_range=(1, 2), max_df=0.5, use_idf=False,
-                                           sublinear_tf=True).extract_features_from_csv
+                                                     sublinear_tf=True).extract_features_from_csv
 
-            clf = SVC(kernel='sigmoid', C=10, gamma=1.4, decision_function_shape='ovr', probability=True)
+            clf = SVC(kernel='linear', C=100, gamma=0.01, decision_function_shape='ovo', probability=True)
     elif svm_sgd:
         clf_title = 'SVM (SGD)'
         if bow:
@@ -141,9 +141,9 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
             clf = SGDClassifier(loss='squared_hinge', penalty='l1', alpha=0.001, max_iter=50, tol=0.2, class_weight=class_weights)
         else: #TODO
             vectorizer_title = 'TF-IDF'
-            counts, targets = FeatureExtractor.tfidf(ngramrange=(1, 4), maxdf=0.25, useidf=True,
-                                           sublinear=True).extract_features_from_csv
-            clf = SGDClassifier(loss='squared_hinge', penalty='l1', alpha=0.001, max_iter=50, tol=0.2)
+            counts, targets = FeatureExtractor.tfidf(ngram_range=(1, 4), max_df=0.25, use_idf=True,
+                                           sublinear_tf=True).extract_features_from_csv
+            clf = SGDClassifier(loss='squared_hinge', penalty='l1', alpha=0.001, max_iter=100, tol=0.2)
 
     elif decision_tree:
         clf = tree.DecisionTreeClassifier()
@@ -172,20 +172,18 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
     prec_scores = []
     rec_scores = []
 
-    # Use label_binarize to be multi-label like settings
-    #Y = label_binarize(targets, classes=[0, 1, 2])
-    #n_classes = Y.shape[1]
-
-    #kf = KFold(n_splits=15)
-    #kf = KFold(n=1062, n_folds=10)
-    kf = StratifiedKFold(y=y_train, n_folds=10, random_state=1)
+    #kf = KFold(n_splits=15, random_state=1)
+    #kf = StratifiedKFold(y=targets, n_folds=15, random_state=1)
 
     confusion = np.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0]])
+    cv = list(StratifiedKFold(n_splits=15, random_state=1).split(counts, targets))
 
-    for k, (train_indices, test_indices) in enumerate(kf):
+    for k, (train_indices, test_indices) in enumerate(cv):
+    #for k, (train_indices, test_indices) in enumerate(kf):
+    #for k, (train_indices, test_indices) in kf.split(targets):
         train_text = counts[train_indices]
         train_y = targets[train_indices]
 
@@ -237,8 +235,8 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
     #confusion += confusion_matrix(y_test, predictions)
     #print(confusion)
 
-    labels = ['Barent.', 'Finanzen', 'Freizeit&L.', 'Lebensh.',
-              'Mobil.&V.', 'Versich.', 'Wohn.&Haus.']
+    labels = ['Barent.', 'Finanzen', 'Freiz.&Lifes.', 'Lebensh.',
+              'Mob.&Verk.', 'Versich.', 'Wohn.&Haus.']
     if plot:
         Plotter.plot_and_show_confusion_matrix(confusion,
                                               labels,
@@ -259,5 +257,5 @@ def estimate_jaccard_similarity():
     print("Jaccard %.3f" % jaccard_similarity_score(y_test, clf.predict(X_test)))
 
 
-#classify(bernoulli_nb=True)
-estimate_jaccard_similarity()
+classify(support_vm=True, plot=True)
+#estimate_jaccard_similarity()

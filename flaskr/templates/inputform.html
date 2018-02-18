@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% if title %}
+    <title>{{title}}</title>
+    {% else %}
+    <title>Search</title>
+    {% endif %}
+  </head>
+  <body>
+    <h1>Booking Classifier</h1>
+        <form action="/classify" method="post" name="classify">
+
+            <label for="bookingtext">Buchungstext</label>
+            <input type="text" name="bookingtext" id="bookingtext" maxlength="30">
+
+            <label for="usage">Verwendungszweck</label>
+            <input type="text" name="usage" id="usage" maxlength="30">
+
+            <label for="owner">Empfänger</label>
+            <input type="text" name="owner" id="owner" maxlength="30">
+
+            <button type="submit">Absenden</button>
+        </form>
+        <br>
+        {% block content %}{% endblock %}
+
+  </body>
+</html>

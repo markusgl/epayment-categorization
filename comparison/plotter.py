@@ -2,11 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import itertools
 
-from matplotlib.colors import ListedColormap
-from sklearn import svm
-from sklearn.datasets import make_blobs
-
-
 class Plotter:
 
     np.set_printoptions(precision=2)
@@ -35,7 +30,7 @@ class Plotter:
         plt.title(title)
         plt.colorbar()
         tick_marks = np.arange(len(categories))
-        plt.xticks(tick_marks, categories, rotation=45)
+        plt.xticks(tick_marks, categories, rotation=55)
         plt.yticks(tick_marks, categories)
 
         fmt = '.2f' if normalize else 'd'
@@ -46,6 +41,7 @@ class Plotter:
                      color="white" if cm[i, j] > thresh else "black")
 
         plt.tight_layout()
+        plt.gcf().subplots_adjust(bottom=0.25)
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
 
