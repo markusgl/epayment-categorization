@@ -49,8 +49,8 @@ class FeatureExtractor:
         only columns category, bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
-        df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
-        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
         #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
 
         #df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
@@ -99,27 +99,36 @@ class FeatureExtractor:
         return df['values'], df['category'].values
 
     def get_jaccard(self):
-        df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_sorted_same_class_amount.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
         #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_barentnahme.csv')
-        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
+        """
+        df['values'] = df[['bookingtext', 'usage', 'owner']].astype(str)\
+                                                            .sum(axis=1)\
+                                                            .replace(disturb_chars, ' ')\
+                                                            .str.lower()
+        """
+        df['values'] = df.bookingtext.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.usage.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.owner.str.replace(disturb_chars,
+                                               ' ').str.lower()
 
         sum = 0
         count = 0
-        for index, row in df.iterrows():
-            str1 = row.bookingtext.replace(disturb_chars, ' ').lower() + \
-                           ' ' + row.usage.replace(disturb_chars, ' ').lower() + \
-                           ' ' + row.owner.replace(disturb_chars, ' ').lower()
-
-            for index, row2 in df.iterrows():
-                str2 = row2.bookingtext.replace(disturb_chars, ' ').lower() + \
-                               ' ' + row2.usage.replace(disturb_chars, ' ').lower() + \
-                               ' ' + row2.owner.replace(disturb_chars, ' ').lower()
-
+        for index, row in df['values'].iteritems():
+            for index, row2 in df['values'].iteritems():
                 #a = set(str1.split())
                 #b = set(str2.split())
+                print(row)
+                print(row2)
 
-                a = set(str1)
-                b = set(str2)
+                a = set(row)
+                b = set(row2)
 
                 c = a.intersection(b)
                 count += 1
@@ -127,29 +136,44 @@ class FeatureExtractor:
 
         print(sum / count)
 
+    def jac_test(self):
+        row = 'aaaaaaaa'
+        row2 = 'aaaaaaaaaaca'
+
+        a = set(row)
+        b = set(row2)
+
+        c = a.intersection(b)
+
+        print(float(len(c)) / (len(a) + len(b) - len(c)))
+
+
     def get_levenshtein(self):
         #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
-        df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_barentnahme.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_barentnahme.csv')
         #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_barentnahme.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
 
+        df['values'] = df.bookingtext.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.usage.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.owner.str.replace(disturb_chars,
+                                               ' ').str.lower()
         sum = 0
         count = 0
-        for index, row in df.iterrows():
-            str1 = row.bookingtext.replace(disturb_chars, ' ').lower() + \
-                           ' ' + row.usage.replace(disturb_chars, ' ').lower() + \
-                           ' ' + row.owner.replace(disturb_chars, ' ').lower()
-
-            for index, row2 in df.iterrows():
-                str2 = row2.bookingtext.replace(disturb_chars, ' ').lower() + \
-                               ' ' + row2.usage.replace(disturb_chars, ' ').lower() + \
-                               ' ' + row2.owner.replace(disturb_chars, ' ').lower()
+        for index, row in df['values'].iteritems():
+            for index, row2 in df['values'].iteritems():
                 count += 1
                 sum += editdistance.eval(row, row2)
 
         print(sum / count)
 
-#fe = FeatureExtractor(ngramrange=(1, 1), maxdf=0.5, useidf=True, sublinear=True)
+#fe = FeatureExtractor.tfidf(ngram_range=(1, 1), max_df=0.5, use_idf=True, sublinear_tf=True)
 #fe.get_jaccard()
+#fe.jac_test()
 #fe.get_levenshtein()
 
 #fex = FeatureExtractor()
@@ -158,3 +182,5 @@ class FeatureExtractor:
 #sbs = SnowballStemmer('german')
 #print(wln_test.lemmatize('Statistik'))
 #print(sbs.stem('Statistik'))
+
+

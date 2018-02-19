@@ -88,7 +88,7 @@ class BookingClassifier:
         #clf = SGDClassifier(loss='hinge', alpha=0.001, max_iter=100)
         clf = SVC(kernel='linear', C=10, decision_function_shape='ovr', probability=True)
         #clf = SGDClassifier(loss='log', max_iter=100, tol=None, shuffle=True)
-        feature_extractor = FeatureExtractor()
+        feature_extractor = FeatureExtractor.tfidf()
 
         counts, targets = feature_extractor.extract_features_from_csv
         print('start training...')

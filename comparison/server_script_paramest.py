@@ -8,7 +8,6 @@ import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 import pandas
-import argparse
 
 nltk.download('stopwords')
 disturb_chars = '([\/+]|\s{3,})' #regex
@@ -110,8 +109,8 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
         return
 
     # perform grid search on pipeline
-    grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters,
-                               cv=15, scoring='accuracy')
+    grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters, n_jobs=-1,
+                               cv=15, scoring='accuracy', verbose=2)
 
     print("Starting gridsearch with "+ str(clf_name))
     with open('/var/booking_categorizer/gridsearch_log', 'a') as file:
@@ -123,7 +122,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     print("Best parameters: " + str(grid_search.best_params_))
     print("Best score: %0.3f" % grid_search.best_score_)
 
-    filename = '/var/booking_categorizer/gridsearch_result_' + str(clf_name)
+    filename = '/var/booking_categorizer/gridsearch_result'
     with open(filename, 'a') as file:
         file.write("------------------------------" + "\n" +
                     clf_name + "\n" +

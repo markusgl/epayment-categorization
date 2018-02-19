@@ -1,13 +1,10 @@
-
 from flask import Flask, request, render_template, session
 from flask_pymongo import PyMongo
-from bson.json_util import dumps
 from booking_classifier import BookingClassifier
 from booking import Booking, BookingSchema, BookingCatSchema
-from persistence.db_persist import DBClient
 from file_handling.file_handler import FileHandler
 from categories import FallbackCategorie as fbcat
-from flaskr.session_handler import ItsdangerousSessionInterface
+from categories import Categories as cat
 from marshmallow import ValidationError
 from flask.sessions import session_json_serializer, SecureCookieSessionInterface
 from itsdangerous import URLSafeTimedSerializer
@@ -42,17 +39,15 @@ def classifyterm():
     return BookingClassifier.classify([term])
 
 
-@app.route("/classify", methods=['POST'])
-def classify():
-    req_data = request.get_json()
-
+def categorize(req_data):
     # schema validation and deserilization
     try:
         booking_schema = BookingSchema()
         booking, errors = booking_schema.load(req_data)
 
         category = classifier.classify(booking)
-        resp = category, 200
+        print(category)
+        resp = well_form_category(category), 200
         if category == fbcat.SONSTIGES.name:
             print('unknown booking. saving to mongodb')
             # save booking temporarily to mongodb for feedback
@@ -70,10 +65,31 @@ def classify():
     return resp
 
 
+@app.route("/classify", methods=['POST'])
+def classify():
+    return categorize(request.get_json())
+
+
+@app.route("/classifyform", methods=['POST'])
+def classify_inputform():
+    req_data = {'booking_date': request.form['booking_date'],
+                'valuta_date': request.form['valuta_date'],
+                'text': request.form['bookingtext'],
+                'usage': request.form['usage'],
+                'creditor_id': request.form['creditor_id'],
+                'owner': request.form['owner'],
+                'iban': request.form['iban'],
+                'bic': request.form['bic'],
+                'amount': request.form['amount']}
+
+    return categorize(req_data)
+
+
 @app.route("/correctbooking", methods=['POST'])
 def correct_booking():
     req_data = request.get_json()
     # schema validation and deserilization
+
     try:
         booking_schema = BookingCatSchema()
         booking, errors = booking_schema.load(req_data)
@@ -130,9 +146,29 @@ def feedback():
             add_booking(booking)
     return "Thanks for the feedback", 200
 
-@app.route("/classifyform", methods=['GET'])
+
+@app.route("/inputform", methods=['GET'])
 def form():
-    return render_template('inputformhtml'), 200
+    return render_template('inputform.html'), 200
+
+
+def well_form_category(category):
+    if category.upper() == cat.BARENTNAHME.name:
+        return 'Barentnahme'
+    elif category.upper() == cat.FINANZEN.name:
+        return 'Finanzen'
+    elif category.upper() == cat.FREIZEITLIFESTYLE.name:
+        return 'Freizeit & Lifestyle'
+    elif category.upper() == cat.LEBENSHALTUNG.name:
+        return 'Lebenshaltung'
+    elif category.upper() == cat.MOBILITAETVERKEHR.name:
+        return 'Mobilitaet & Verkehrsmittel'
+    elif category.upper() == cat.VERSICHERUNGEN.name:
+        return 'Versicherungen'
+    elif category.upper() == cat.WOHNENHAUSHALT.name:
+        return 'Wohnen & Haushalt'
+    else:
+        return 'Sonstiges'
 
 if __name__ == '__main__':
     #app.session_interface = ItsdangerousSessionInterface()
