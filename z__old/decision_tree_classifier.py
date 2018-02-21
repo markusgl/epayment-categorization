@@ -1,20 +1,21 @@
-from sklearn import tree
 import numpy
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import Pipeline
+from sklearn import tree
 from sklearn.cross_validation import KFold
-from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from plotter import Ploter
-import feature_extraction
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.pipeline import Pipeline
+
 from categories import Categories as ctg
+from comparison.plotter import Plotter
+from z__old import _old_feature_extraction
 
 
 # TODO - work in progess...
 
 def test_with_examples():
     count_vectorizer = CountVectorizer()
-    counts, targets = feature_extraction.extract_features()
+    counts, targets = _old_feature_extraction.extract_features()
     classifier = tree.DecisionTreeClassifier()
     classifier.fit(counts, targets)
 
@@ -36,7 +37,7 @@ pipeline = Pipeline([
 ''' ###### CROSS VALIDATION ####### 
 Validate the classifier against unseen data using k-fold cross validation
 '''
-data = feature_extraction.append_data_frames()
+data = _old_feature_extraction.append_data_frames()
 k_fold = KFold(n=len(data), n_folds=6)
 scores = []
 confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
@@ -66,4 +67,4 @@ class_names = [ctg.BARENTNAHME.name, ctg.FINANZEN.name,
                ctg.MOBILITAETVERKEHR.name, ctg.VERSICHERUNGEN.name,
                ctg.WOHNENHAUSHALT.name]
 
-Ploter.plot_and_show_confusion_matrix(confusion, class_names, normalize=True, title='Decision Tree normalized', save=False)
+Plotter.plot_and_show_confusion_matrix(confusion, class_names, normalize=True, title='Decision Tree normalized', save=False)

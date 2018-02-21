@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% if title %}
+    <title>{{title}}</title>
+    {% else %}
+    <title>Search</title>
+    {% endif %}
+  </head>
+  <body>
+    <h1>Booking Classifier</h1>
+        <form action="{{ url_for('classify_inputform') }}" method="post" name="classify">
+            <fieldset>
+                <label for="booking_date">Buchungsdatum</label><br/>
+                <input type="text" name="booking_date" id="booking_date" maxlength="30">
+                <br/>
+                <label for="valuta_date">Valutadatum</label><br/>
+                <input type="text" name="valuta_date" id="valuta_date" maxlength="30">
+                <br/>
+                <label for="bookingtext">Buchungstext</label><br/>
+                <input type="text" name="bookingtext" id="bookingtext" maxlength="30">
+                <br/>
+                <label for="usage">Verwendungszweck</label><br/>
+                <input type="text" name="usage" id="usage" maxlength="30">
+                <br/>
+                <label for="creditor_id">Gläubiger-ID</label><br/>
+                <input type="text" name="creditor_id" id="creditor_id" maxlength="30">
+                <br/>
+                <label for="owner">Zahlungsempfänger</label><br/>
+                <input type="text" name="owner" id="owner" maxlength="30">
+                <br/>
+                <label for="iban">IBAN</label><br/>
+                <input type="text" name="iban" id="iban" maxlength="30">
+                <br/>
+                <label for="bic">BIC</label><br/>
+                <input type="text" name="bic" id="bic" maxlength="30">
+                <br/>
+                <label for="amount">Betrag</label><br/>
+                <input type="text" name="amount" id="amount" maxlength="30">
+                <br/><br/>
+                <button type="submit">Absenden</button>
+            </fieldset>
+        </form>
+        <br>
+        {% block content %}{% endblock %}
+  </body>
+</html>

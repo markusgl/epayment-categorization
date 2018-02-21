@@ -2,19 +2,16 @@
 SVM with stochastic gradient descend (SGD) learning
 """
 
-from sklearn.linear_model import SGDClassifier
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.pipeline import Pipeline
-import feature_extraction
-from sklearn import metrics
-from sklearn.cross_validation import KFold
 import numpy
+from sklearn.cross_validation import KFold
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
-from plotter import Ploter
+from sklearn.pipeline import Pipeline
+
 from categories import Categories as cat
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy
+from comparison.plotter import Plotter
+from z__old import _old_feature_extraction
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -33,11 +30,11 @@ def classify_examples(tfidf=False, plot=False, log=False):
         classifier = SGDClassifier(loss='log')
 
     # retrieve feature vector and target vector
-    counts, targets = feature_extraction.extract_features()
+    counts, targets = _old_feature_extraction.extract_features()
     if tfidf:
-        counts, targets = feature_extraction.extract_features_tfidf()
+        counts, targets = _old_feature_extraction.extract_features_tfidf()
 
-    example_counts, examples = feature_extraction.extract_example_features()
+    example_counts, examples = _old_feature_extraction.extract_example_features()
 
     classifier.fit(counts, targets) #train the classifier
     predictions = classifier.predict(example_counts)
@@ -68,11 +65,11 @@ def classify_w_cross_validation(plot=False):
     pipeline = Pipeline([
         ('count_vectorizer', CountVectorizer()),
         ('tfidf_transformer', TfidfTransformer()),
-        ('classifier', SGDClassifier(loss='log'))
-        #('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
+        #('classifier', SGDClassifier(loss='log'))
+        ('classifier', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, random_state=42))
     ])
 
-    data = feature_extraction.append_data_frames()
+    data = _old_feature_extraction.append_data_frames()
     k_fold = KFold(n=len(data), n_folds=6)
     scores = []
     confusion = numpy.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
@@ -100,11 +97,11 @@ def classify_w_cross_validation(plot=False):
     print(confusion)
 
     if plot:
-        Ploter.plot_and_show_confusion_matrix(confusion,
-                                              category_names,
-                                              normalize=True,
-                                              title='SVM Classifier',
-                                              save=True)
+        Plotter.plot_and_show_confusion_matrix(confusion,
+                                               category_names,
+                                               normalize=True,
+                                               title='SVM Classifier',
+                                               save=True)
 
-classify_examples(log=True)
-#classify_w_cross_validation(True)
+#classify_examples(log=True)
+classify_w_cross_validation(True)

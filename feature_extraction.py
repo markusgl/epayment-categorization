@@ -1,114 +1,186 @@
-import os
-import numpy as np
-from pandas import DataFrame
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
+
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from categories import Categories as cat
-from scipy import sparse
+from nltk import word_tokenize
+from nltk.stem import WordNetLemmatizer, SnowballStemmer
+import string
+import nltk
+import re
+from booking import Booking
+import scipy as sp
+from file_handling.file_handler import FileHandler
+import editdistance
+import pandas as pd
 
-NEWLINE = '\n'
-
-#root_path='F:\\Datasets\\Transaction-Dataset\\'
-root_path='/Users/mgl/Training_Data/Transaction-Dataset/'
-
-SOURCES = [
-    (root_path+'barentnahme', cat.BARENTNAHME.name),
-    (root_path+'finanzen', cat.FINANZEN.name),
-    (root_path+'freizeitlifestyle', cat.FREIZEITLIFESTYLE.name),
-    (root_path+'lebenshaltung', cat.LEBENSHALTUNG.name),
-    (root_path+'mobilitaetverkehrsmittel', cat.MOBILITAETVERKEHR.name),
-    (root_path+'versicherungen', cat.VERSICHERUNGEN.name),
-    (root_path+'wohnenhaushalt', cat.WOHNENHAUSHALT.name)
-]
-
-SKIP_FILES = {'cmds'}
-
-def read_files(path):
-    """
-    iterate through all files an yield the text body
-    :param path:
-    :return: file path, content
-    """
-    for root, dir_names, file_names in os.walk(path):
-        for path in dir_names:
-            read_files(os.path.join(root, path))
-        for file_name in file_names:
-            if file_name not in SKIP_FILES:
-                file_path = os.path.join(root, file_name)
-                if os.path.isfile(file_path):
-                    #past_header, lines = False, []
-                    lines = []
-                    f = open(file_path, encoding="iso-8859-1")
-                    for line in f:
-                        lines.append(line)
-                    f.close()
-                    content = NEWLINE.join(lines)
-                    yield file_path, content
+#nltk.download('wordnet')
+#nltk.download('punkt')
+nltk.download('stopwords')
+disturb_chars = '([\/+]|\s{3,})' #regex
 
 
-def build_data_frame(path, classification):
-    """
-    build a dataset from transaction bodies containing purpose, receiver and
-    booking type
-    :param path:
-    :param classification:
-    :return: pandas data frame
-    """
-    rows = []
-    index = []
-    for file_name, text in read_files(path):
-        rows.append({'text': text, 'class': classification})
-        index.append(file_name)
+class StemTokenizer(object):
+    def __init__(self):
+        self.sbs = SnowballStemmer('german', ignore_stopwords=True)
 
-    data_frame = DataFrame(rows, index=index)
-    return data_frame
-
-def append_data_frames():
-    """
-    concatenate DataFrames using pandas append method
-    :return: pandas data frame
-    """
-    data = DataFrame({'text': [], 'class': []})
-    for path, classification in SOURCES:
-        data = data.append(build_data_frame(path, classification))
-
-    return data.reindex(np.random.permutation(data.index))
-
-def extract_features():
-    """
-    Learn vocabulary and extract features using bag-of-words (word count)
-    :return: term-document matrix
-    """
-    data = append_data_frames()
-    count_vectorizer = CountVectorizer() # bag-of-words
-
-    targets = data['class'].values
-    word_counts = count_vectorizer.fit_transform(data['text'].values)
-
-    return word_counts, targets
+    def __call__(self, doc):
+        # TreeBankTokenizer
+        return [self.sbs.stem(t) for t in word_tokenize(doc)]
 
 
-def extract_features_tfidf():
-    """
-    Learn vocabulary and extract features using tf-idf
-    (term frequency - inverse document frequency)
-    :return: term-document matrix, array of class labels
-    """
-    data = append_data_frames()
-    tfidf_vectorizer = TfidfVectorizer()
+class FeatureExtractor:
+    def __init__(self, vectorizer):
+        self.file_handler = FileHandler()
+        self.vectorizer = vectorizer
 
-    targets = data['class'].values
-    tfidf = tfidf_vectorizer.fit_transform(data['text'].values)
+    @classmethod
+    def bow(cls, **kwargs):
+        vectorizer = CountVectorizer(**kwargs)
+        return cls(vectorizer)
 
-    return tfidf, targets
+    @classmethod
+    def tfidf(cls, **kwargs):
+        vectorizer = TfidfVectorizer(**kwargs)
+        return cls(vectorizer)
 
-def extract_example_features():
-    data = append_data_frames()
-    count_vectorizer = CountVectorizer()
-    count_vectorizer.fit_transform(data['text'].values)
+    @property
+    def extract_features_from_csv(self):
+        """
+        builds a pandas data frame from csv file (semicolon separated)
+        only columns category, bookingtext, usage and owner are necessary
+        :return: word counts, targets
+        """
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
 
-    examples = ['advocard', 'xdfsd', 'versicherungen',
-                'dauerauftrag miete spenglerstr', 'norma', 'adac',
-                'nuernberger']
-    example_counts = count_vectorizer.transform(examples)
+        #df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
+        #             ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
+        #             ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
+        df['values'] = df[['bookingtext', 'usage', 'owner']].astype(str)\
+                                                            .sum(axis=1)\
+                                                            .replace(disturb_chars, ' ')\
+                                                            .str.lower()
 
-    return example_counts, examples
+        targets = df['category'].values
+
+        # create term-document matrix
+        word_counts = self.vectorizer.fit_transform(df['values'].values.astype(str)).astype(float)
+        #word_counts = sp.hstack(text.apply(lambda col: self.vectorizer.fit_transform(col.values.astype(str)).astype(float)))
+
+        return word_counts, targets
+
+    def extract_termlist_features(self, term_list):
+        example_counts = self.vectorizer.transform([' '.join(term_list[0:3])])
+
+        return example_counts
+
+    def fetch_data(self):
+        df = self.file_handler.read_csv('C:/tmp/Labeled_transactions_sorted_same_class_amount.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_sorted_same_class_amount.csv')
+
+        df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
+                     ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
+
+        targets = df['category'].values
+
+        return df['values'].values.astype(str), targets
+
+    def get_dataframes(self):
+        df = self.file_handler.read_csv()
+        df['values'] = df.bookingtext.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.usage.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.owner.str.replace(disturb_chars,
+                                                  ' ').str.lower()
+
+
+        return df['values'], df['category'].values
+
+    def get_jaccard(self):
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_sorted_same_class_amount.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_barentnahme.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
+        """
+        df['values'] = df[['bookingtext', 'usage', 'owner']].astype(str)\
+                                                            .sum(axis=1)\
+                                                            .replace(disturb_chars, ' ')\
+                                                            .str.lower()
+        """
+        df['values'] = df.bookingtext.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.usage.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.owner.str.replace(disturb_chars,
+                                               ' ').str.lower()
+
+        sum = 0
+        count = 0
+        for index, row in df['values'].iteritems():
+            for index, row2 in df['values'].iteritems():
+                #a = set(str1.split())
+                #b = set(str2.split())
+                print(row)
+                print(row2)
+
+                a = set(row)
+                b = set(row2)
+
+                c = a.intersection(b)
+                count += 1
+                sum += float(len(c)) / (len(a) + len(b) - len(c))
+
+        print(sum / count)
+
+    def jac_test(self):
+        row = 'aaaaaaaa'
+        row2 = 'aaaaaaaaaaca'
+
+        a = set(row)
+        b = set(row2)
+
+        c = a.intersection(b)
+
+        print(float(len(c)) / (len(a) + len(b) - len(c)))
+
+
+    def get_levenshtein(self):
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_barentnahme.csv')
+        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_barentnahme.csv')
+        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
+
+        df['values'] = df.bookingtext.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.usage.str.replace(disturb_chars,
+                                                  ' ').str.lower() + \
+                       ' ' + df.owner.str.replace(disturb_chars,
+                                               ' ').str.lower()
+        sum = 0
+        count = 0
+        for index, row in df['values'].iteritems():
+            for index, row2 in df['values'].iteritems():
+                count += 1
+                sum += editdistance.eval(row, row2)
+
+        print(sum / count)
+
+#fe = FeatureExtractor.tfidf(ngram_range=(1, 1), max_df=0.5, use_idf=True, sublinear_tf=True)
+#fe.get_jaccard()
+#fe.jac_test()
+#fe.get_levenshtein()
+
+#fex = FeatureExtractor()
+#w,c = fex.extract_features_from_csv()
+#wln_test = WordNetLemmatizer()
+#sbs = SnowballStemmer('german')
+#print(wln_test.lemmatize('Statistik'))
+#print(sbs.stem('Statistik'))
+
+
