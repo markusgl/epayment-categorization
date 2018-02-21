@@ -11,6 +11,11 @@ import pandas
 
 nltk.download('stopwords')
 disturb_chars = '([\/+]|\s{3,})' #regex
+log_filename = '/var/booking_categorizer/gridsearch_log.log'
+result_filename = '/var/booking_categorizer/gridsearch_result'
+source_csv = '/var/booking_categorizer/Labeled_transactions_sorted_same_class_amount.csv'
+# provide an integer between 0 and 10 - the higher, the more messages
+logging_threshold = 2
 
 class StemTokenizer(object):
     def __init__(self):
@@ -25,7 +30,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
                         k_nearest=False, support_vm=False, support_vmsgd=False,
                         bow=False, tfidf=False):
 
-    df = pandas.read_csv(filepath_or_buffer='/var/booking_categorizer/Labeled_transactions_sorted_same_class_amount.csv', delimiter=',')
+    df = pandas.read_csv(filepath_or_buffer=source_csv, delimiter=',')
     df['values'] =  df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
@@ -81,6 +86,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
 
     # add feature extraction params and classifier to pipeline
     if bow:
+        vectorizer_name = "Bag-of-Words"
         parameters.update({
             'vect__max_df': MAX_DF,
             'vect__ngram_range': N_GRAMS
@@ -91,6 +97,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
             ('clf', CLF)
         ])
     elif tfidf:
+        vectorizer_name = 'TF-IDF'
         parameters.update({
             'tfidf__max_df': MAX_DF,
             'tfidf__ngram_range': N_GRAMS,
@@ -110,10 +117,10 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
 
     # perform grid search on pipeline
     grid_search = GridSearchCV(estimator=pipeline, param_grid=parameters, n_jobs=-1,
-                               cv=15, scoring='accuracy', verbose=2)
+                               cv=15, scoring='accuracy', verbose=logging_threshold)
 
-    print("Starting gridsearch with "+ str(clf_name))
-    with open('/var/booking_categorizer/gridsearch_log', 'a') as file:
+    print("Starting gridsearch with "+ str(clf_name) + " " + str(vectorizer_name))
+    with open(log_filename, 'a') as file:
         file.write("Starting gridsearch " + str(clf_name) + "\n")
 
     # learn vocabulary
@@ -122,10 +129,9 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     print("Best parameters: " + str(grid_search.best_params_))
     print("Best score: %0.3f" % grid_search.best_score_)
 
-    filename = '/var/booking_categorizer/gridsearch_result'
-    with open(filename, 'a') as file:
+    with open(result_filename, 'a') as file:
         file.write("------------------------------" + "\n" +
-                    clf_name + "\n" +
+                    str(clf_name) + " " + str(vectorizer_name) + "\n" +
                     "Best parameters: " + str(grid_search.best_params_) + "\n" +
                    "Best score: %0.3f" % grid_search.best_score_  + "\n")
 
