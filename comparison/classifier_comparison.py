@@ -101,7 +101,7 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
         if bow:
             vectorizer_title = 'Bag-of-Words'
             counts, targets = FeatureExtractor.bow(max_df=0.5,
-                                                     ngram_range=(1, 1)).extract_features_from_csv
+                                                   ngram_range=(1, 1)).extract_features_from_csv
             clf = KNeighborsClassifier(weights='distance', n_neighbors=2,
                                        leaf_size=20, algorithm='auto')
         else: #TODO
@@ -133,17 +133,21 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
         if bow:
             vectorizer_title = 'Bag-of-Words'
             counts, targets = FeatureExtractor.bow(max_df=0.25,
-                                                     ngram_range=(1, 4)).extract_features_from_csv
+                                                   ngram_range=(1, 4)).extract_features_from_csv
             target_ints = []
             for target in targets:
                 target_ints.append(category_names_reverse.index(target))
             class_weights = get_classweight(targets)
-            clf = SGDClassifier(loss='squared_hinge', penalty='l1', alpha=0.001, max_iter=50, tol=0.2, class_weight=class_weights)
+            clf = SGDClassifier(loss='squared_hinge', penalty='l1', alpha=1e-05, max_iter=100, tol=0.2, class_weight=class_weights)
         else: #TODO
             vectorizer_title = 'TF-IDF'
-            counts, targets = FeatureExtractor.tfidf(ngram_range=(1, 4), max_df=0.25, use_idf=True,
-                                           sublinear_tf=True).extract_features_from_csv
-            clf = SGDClassifier(loss='squared_hinge', penalty='l1', alpha=0.001, max_iter=100, tol=0.2)
+            counts, targets = FeatureExtractor.tfidf(ngram_range=(1, 4), max_df=0.25, use_idf=False,
+                                                     sublinear_tf=True).extract_features_from_csv
+            target_ints = []
+            for target in targets:
+                target_ints.append(category_names_reverse.index(target))
+            class_weights = get_classweight(targets)
+            clf = SGDClassifier(loss='hinge', penalty='l1', alpha=1e-05, max_iter=100, tol=0.2, class_weight=class_weights)
 
     elif decision_tree:
         clf = tree.DecisionTreeClassifier()
@@ -159,7 +163,7 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
         return
 
     # split data into test and training set - hold 20% out for testing
-    X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=0)
+    #X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=0)
 
     clf.fit(counts, targets)
 
@@ -202,21 +206,6 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
 
         #print(classification_report(test_y, predictions, target_names=targets))
 
-    """
-    for train_indices, test_indices in loo.split(counts):
-        train_text = counts[train_indices]
-        train_y = targets[train_indices]
-
-        test_text = counts[test_indices]
-        test_y = targets[test_indices]
-
-        clf.fit(train_text, train_y)
-        predictions_k = clf.predict(test_text)
-
-        confusion += confusion_matrix(test_y, predictions_k)
-        k_score = accuracy_score(test_y, predictions_k)
-        kc_scores.append(k_score)
-    """
     print("---------------------- \nResults for ", clf_title, " with ", vectorizer_title, ":")
     print("K-Folds Accuracy-score: ", sum(ac_scores)/len(ac_scores))
     print("K-Folds F1-score: ", sum(f1_scores)/len(f1_scores))
@@ -257,5 +246,5 @@ def estimate_jaccard_similarity():
     print("Jaccard %.3f" % jaccard_similarity_score(y_test, clf.predict(X_test)))
 
 
-classify(support_vm=True, plot=True)
+classify(svm_sgd=True)
 #estimate_jaccard_similarity()

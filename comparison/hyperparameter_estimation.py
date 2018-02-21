@@ -1,6 +1,9 @@
+"""
+This module is used for estimating the best hyperparemter values
+for bank transactions
+"""
+
 from pprint import pprint
-
-
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.learning_curve import validation_curve
 from sklearn.linear_model import SGDClassifier
@@ -15,26 +18,29 @@ import matplotlib.pyplot as plt
 
 
 def plot_validation_curve():
-    counts, targets = FeatureExtractor.tfidf(ngram_range=(1,4), max_df=0.5, use_idf=False, sublinear_tf=True).extract_features_from_csv
-    # split data into test and training set - hold 20% out for testing
-    X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=1)
+    """
+    Plots the validation curve for a given range of parameters (param_range)
+    This is intedet for limiting the values used in grid search
+    (method estimate_parameters)
+    """
+    counts, targets = FeatureExtractor.tfidf(ngram_range=(1,4), max_df=0.5,
+                                             use_idf=False, sublinear_tf=True)\
+                                             .extract_features_from_csv
 
+    # split data into test and training set - hold 20% out for testing
+    X_train, X_test, y_train, y_test = train_test_split(counts, targets,
+                                                        test_size=0.2,
+                                                        random_state=1)
+
+    # example usage validating param range for 'alpha' of SGDClassifier
     pipeline = Pipeline([
         ('clf', SGDClassifier())
     ])
-    #param_range = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
-    #param_range = [1.0, 1.2, 1.4, 1.6]
-    #param_range = [0.0001, 0.00001, 0.000001, 0.0000001, 0.0000001, 0.00000001, 0.000000001, 1e-10]
-    #param_range = 10.0**-np.arange(5,11)
-    #param_range = np.logspace(-9, 3, 13)
-    #param_range = [1000, 10000, 100000]
-    #param_range = 10.0**-np.arange(1,8)
-    #param_range = [np.ceil(10**6 / 1062)]
-    param_range = [0.0, 0.2, 0.5, 0.7]
+    param_range = [10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
 
     train_scores, test_scores = validation_curve(estimator=pipeline, X=X_train,
                                                  y=y_train,
-                                                 param_name='clf__eta0',
+                                                 param_name='clf__alpha',
                                                  param_range=param_range,
                                                  cv=10)
     print(train_scores)
@@ -72,6 +78,18 @@ def plot_validation_curve():
 def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
                         k_nearest=False, support_vm=False, support_vmsgd=False,
                         bow=False, tfidf=False):
+    """
+    This method performs a grid search on the given algorithm using a fixed
+    set of parameter ranges.
+    The values with highest score are printed to stdout after evaluation
+    :param multinomial_nb: MultinomialNB
+    :param bernoulli_nb: BernoulliNB
+    :param k_nearest: KNearestClassifier
+    :param support_vm: Linear SVM aka SVC
+    :param support_vmsgd: SGDClassifier
+    :param bow: CountVectorizer aka Bag-of-words
+    :param tfidf: TfidfVectorizer
+    """
     fe = FeatureExtractor()
     counts, targets = fe.fetch_data()
 
@@ -81,13 +99,11 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
     if multinomial_nb:
         CLF = MultinomialNB()
         parameters = {
-            #'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
             'clf__alpha': 10.0 ** -np.arange(5, 11)
         }
     elif bernoulli_nb:
         CLF = BernoulliNB()
         parameters = {
-            #'clf__alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
             'clf__alpha': 10.0 ** -np.arange(5, 11)
         }
     elif k_nearest:
@@ -139,6 +155,7 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
             'tfidf__ngram_range': N_GRAMS,
             'tfidf__analyzer': ('word', 'char'),
             'tfidf__sublinear_tf': (True, False),
+            'tfidf__smooth_idf': (True, False),
             'tfidf__use_idf': (True, False),
             'tfidf__norm': ('l1', 'l2', None)
             })
@@ -170,5 +187,5 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
                    "Best score: %0.3f" % grid_search.best_score_)
 
 
-estimate_parameters(support_vm=True, tfidf=True)
+#estimate_parameters(support_vm=True, tfidf=True)
 #plot_validation_curve()

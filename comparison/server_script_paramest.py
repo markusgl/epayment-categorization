@@ -1,3 +1,11 @@
+"""
+This is the 'all-in-one' hyperparameter evaluation module used for running on a
+server and independent from other modules in this project. This module can be
+copied outside the project and run as standalone script.
+No further modules from this project are needed despite the ones in the import
+list.
+"""
+
 import nltk
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.linear_model import SGDClassifier
