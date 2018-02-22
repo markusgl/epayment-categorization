@@ -64,16 +64,22 @@ def categorize(req_data):
         category, probability = classifier.classify(booking)
 
         wf_category = well_form_category(category)
-        resp = wf_category, round(ast.literal_eval(probability), 4)*100
+        #resp = wf_category, round(ast.literal_eval(probability), 4)*100
+
+        resp = render_template('result.html', category=wf_category,
+                               prob=round(ast.literal_eval(probability), 4)*100)
         if category == fbcat.SONSTIGES.name:
             print('unknown booking. saving to mongodb')
             # save booking temporarily to mongodb for feedback
             bookings = mongo.db.bookings
             booking_id = bookings.insert_one(req_data).inserted_id
-            # DBClient().add_booking(booking) #ontextwechsel
+            # DBClient().add_booking(booking) # Kontextwechsel
             # save mongoid to session cookie
 
             session['value'] = str(booking_id)
+            resp = render_template('feedback.html', category=wf_category,
+                                   prob=round(ast.literal_eval(probability),
+                                              4) * 100)
         # TODO if category sonstiges feedback
     except ValidationError as err:
         print(err.messages)
@@ -84,14 +90,12 @@ def categorize(req_data):
 
 @app.route("/categorize", methods=['POST'])
 def classify_json():
-    cat, prob = categorize(request.get_json())
-    return render_template('result.html', category=cat, prob=prob)
+    return categorize(request.get_json())
 
 
 @app.route("/classifyform", methods=['POST'])
 def classify_inputform():
-    cat, prob = categorize(json.dumps(request.form))
-    return render_template('result.html', category=cat, prob=prob)
+    return categorize(json.dumps(request.form))
 
 
 @app.route("/inputform", methods=['GET'])
@@ -149,15 +153,20 @@ def add_booking():
 @app.route("/feedback", methods=['POST'])
 def feedback():
     booking_id = session['value']
-    req_data = request.get_json()
+    #req_data = request.get_json()
+    req_data = json.dumps(request.form)
+    print(type(req_data))
+    req_data = ast.literal_eval(str(req_data))
     if 'category' in req_data:
         category = req_data['category']
         bookings = mongo.db.bookings
         booking_schema = BookingSchema()
-        booking = bookings.find_one({"_id": booking_id})
+        print(booking_id)
+        booking = bookings.find_one({"_id": ObjectId(booking_id)})
 
         if booking:
-            add_booking(booking)
+            print(booking)
+            #add_booking(booking)
     return "Thanks for the feedback", 200
 
 

@@ -1,5 +1,3 @@
-import ast
-
 import numpy as np
 from nltk import WhitespaceTokenizer
 from pymongo import MongoClient
@@ -75,8 +73,10 @@ class BookingClassifier:
         # if max prediction probability is less than 70% assume that the booking category is unknown
         prob = str(max(max(predict_probabilities)))
         print("P:" + str(prob))
+        print("Highest ranked category: " + str(category_names[np.argmax(predict_probabilities)]))
+
         if max(max(predict_probabilities)) < 0.7:
-            category = str(fbcat.SONSTIGES.name) # fallback category
+            category = str(fbcat.SONSTIGES.name)  # fallback category
         else:
             category = str(category_names[np.argmax(predict_probabilities)])
 
@@ -97,7 +97,7 @@ class BookingClassifier:
 
         counts, targets = feature_extractor.extract_features_from_csv()
         print('start training...')
-        clf.fit(counts, targets) # train the classifier
+        clf.fit(counts, targets)  # train the classifier
         print('training finished. start dumping model...')
 
         # save model and classifier to disk

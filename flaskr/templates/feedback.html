@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Feedback</title>
+    </head>
+    <body>
+        <p><b>Kategorie:</b> {{ category }}</p>
+        <p><b>Wahrscheinlichkeit:</b> {{ prob }} %</p>
+        <br>
+        <h2>Feedback:</h2>
+        <form action="{{ url_for('feedback') }}" method="post">
+          <select name="category">
+            <option value="barentnahme">Barentnahme</option>
+            <option value="finanzen">Finanzen</option>
+            <option value="freizeitlifestyle">Freizeit & Lifestyle</option>
+            <option value="lebenshaltung">Lebenshaltung</option>
+            <option value="mobilitaetverkehrsmittel">Mobilität & Verkehrsmittel</option>
+            <option value="versicherungen">Versicherungen</option>
+              <option value="wohnenhaushalt">Wohnen & Haushalt</option>
+          </select>
+          <br><br>
+            <button type="submit">Absenden</button>
+        </form>
+    </body>
+</html>
