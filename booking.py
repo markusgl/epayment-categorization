@@ -1,6 +1,6 @@
 """ schema for a bank booking """
 
-from marshmallow import Schema, fields, pprint, post_load
+from marshmallow import Schema, fields, post_load
 
 
 class Booking:
@@ -25,16 +25,16 @@ class Booking:
 
 
 class BookingSchema(Schema):
-    category = fields.Str()
-    booking_date = fields.Date()
-    valuta_date = fields.Date()
-    text = fields.Str(required=True)
-    usage = fields.Str(required=True)
-    creditor_id = fields.Str()
-    owner = fields.Str(required=True)
-    iban = fields.Str()
-    bic = fields.Str()
-    amount = fields.Float(required=True)
+    category = fields.Str(required=False, allow_none=True)
+    booking_date = fields.Date(required=False, allow_none=True)
+    valuta_date = fields.Date(required=False, allow_none=True)
+    text = fields.Str(required=True, allow_none=True)
+    usage = fields.Str(required=True, allow_none=True)
+    creditor_id = fields.Str(required=False, allow_none=True)
+    owner = fields.Str(required=True, allow_none=True)
+    iban = fields.Str(required=False, allow_none=True)
+    bic = fields.Str(required=False, allow_none=True)
+    amount = fields.Float(required=True, allow_none=True)
 
     @post_load
     def make_booking(self, data):
@@ -57,31 +57,19 @@ class BookingCatSchema(Schema):
     def make_booking(self, data):
         return Booking(**data)
 
-'''
-b1 = dict(category='wohnenhaushalt', booking_date='01.09.2017', valuta_date='01.09.2017',
-               text='FOLGELASTSCHRIFT', usage='KTO 778019565 Abschlag 46,00 EUR faellig 01.09.17 Spenglerstr. 17',
-               creditor_id='DE05NAG00000005699', owner='N-Ergie Aktiengesellschaft;DE19700500000000055162',
-               bic='BYLADEMMXXX', amount='-46.00')
-'''
-'''
-req_data = {'category':'wohnenhaushalt', 'booking_date':'01.09.2017', 'valuta_date':'01.09.2017',
-               'text':'FOLGELASTSCHRIFT', 'usage':'KTO 778019565 Abschlag 46,00 EUR faellig 01.09.17 Spenglerstr. 17',
-               'creditor_id':'DE05NAG00000005699', 'owner':'N-Ergie Aktiengesellschaft', 'iban':'DE19700500000000055162',
-               'bic':'BYLADEMMXXX', 'amount':'-46.00'}
-'''
+"""
+req_data = {"booking_date": "", "valuta_date": "01.01.2018", "text": "kartenzahlung",
+            "usage": "Obi 123", "creditor_id": "", "owner": "Obi", "iban": "", "bic": "", "amount": "-10.00"}
 
-#booking_schema = BookingSchema()
-#booking, errors = booking_schema.load(req_data)
+if not req_data['booking_date']:
+    req_data['booking_date'] = None
+if not req_data['valuta_date']:
+    req_data['valuta_date'] = None
 
+booking_schema = BookingSchema()
+booking, errors = booking_schema.load(req_data, partial=True)
+print(type(booking))
 #print(booking.to_array())
+"""
 
-
-#if errors:
-#    print(errors)
-#else:
-#    print(booking.usage)
-#pprint(result.data, indent=2)
-#booking = result.data
-#print(type(booking))
-#print(booking)
 

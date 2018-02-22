@@ -85,12 +85,12 @@ class NLTKPreprocessor(BaseEstimator, TransformerMixin):
 #            'MUSTER LEBENSVERSICHERUNG AG 123456789098 MLV LEBENSVERS. / 01.01.2017 50, 00 Lastschrift',
 #            'Gesund BKK 1234567 AKV KRANKENVERS. R/ 01.01.2017 6,00 Lastschrift']
 
-examples = ['DANKE, IHR LIDL//Nuernberg/DE 2017-01-01T10:00:00 Karte1 2017-12 Kartenzahlung']
+#examples = ['DANKE, IHR LIDL//Nuernberg/DE 2017-01-01T10:00:00 Karte1 2017-12 Kartenzahlung']
 
-tokenized_examples = (['DANKE', 'IHR', 'LIDL', 'Nuernberg', 'DE'])
+#tokenized_examples = (['DANKE', 'IHR', 'LIDL', 'Nuernberg', 'DE'])
 #tagger.tag(tokenized_examples)
 
-lemma_examples = ['die welt']
+#lemma_examples = ['die welt']
 
 """
 for example in lemma_examples:
@@ -99,7 +99,7 @@ for example in lemma_examples:
 
     for token in doc:
         print(token.lemma_)
-"""
+
 
 for example in examples:
     clean_example = re.sub(nastygrammer, ' ', example.lower())
@@ -126,3 +126,4 @@ for example in examples:
 
     #for token in doc:
     #    print(token.lemma_)
+"""

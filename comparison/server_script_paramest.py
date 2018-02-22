@@ -144,6 +144,6 @@ def estimate_parameters(multinomial_nb=False, bernoulli_nb=False,
                    "Best score: %0.3f" % grid_search.best_score_  + "\n")
 
 #estimate_parameters(k_nearest=True, tfidf=True)
-estimate_parameters(support_vm=True, tfidf=True)
+#estimate_parameters(support_vm=True, tfidf=True)
 #estimate_parameters(support_vmsgd=True, bow=True)
 #estimate_parameters(support_vmsgd=True, tfidf=True)

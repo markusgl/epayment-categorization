@@ -76,9 +76,12 @@ class FeatureExtractor:
         return word_counts, targets
 
     def extract_termlist_features(self, term_list):
-        example_counts = self.vectorizer.transform([' '.join(term_list[0:3])])
+        term_list = term_list.replace(disturb_chars, ' ').lower()
+        #print([' '.join(term_list[0:3])])
+        #word_counts = self.vectorizer.transform([' '.join(term_list[0:3])]).astype(float)
+        word_counts = self.vectorizer.transform([term_list]).astype(float)
 
-        return example_counts
+        return word_counts
 
     def fetch_data(self):
         df = self.file_handler.read_csv('C:/tmp/Labeled_transactions_sorted_same_class_amount.csv')
@@ -155,4 +158,4 @@ class FeatureExtractor:
 #fe.get_jaccard()
 #fe.jac_test()
 #fe.get_levenshtein()
-print(editdistance.eval("text", "test"))
+#print(editdistance.eval("text", "test"))

@@ -246,5 +246,5 @@ def estimate_jaccard_similarity():
     print("Jaccard %.3f" % jaccard_similarity_score(y_test, clf.predict(X_test)))
 
 
-classify(svm_sgd=True)
+#classify(svm_sgd=True)
 #estimate_jaccard_similarity()

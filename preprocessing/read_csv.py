@@ -78,13 +78,5 @@ def save_generated_data_to_mongodb():
 
 
 #save_generated_data_to_mongodb()
-"""
-client = MongoClient('mongodb://localhost:27017/')
-db = client.companyset # dbname
 
-regex = re.compile("de74zzz00000045294", re.IGNORECASE)
-#pprint.pprint(db.companies.find_one({"creditorid": regex}))
-db_entry = db.companies.find_one({"creditorid": regex})
-print(db_entry['category'])
-"""
 

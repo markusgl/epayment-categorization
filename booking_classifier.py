@@ -1,29 +1,28 @@
+import ast
 
 import numpy as np
 from nltk import WhitespaceTokenizer
 from pymongo import MongoClient
 from sklearn.externals import joblib
-from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
 from pathlib import Path
 from categories import Categories as cat
 from categories import FallbackCategorie as fbcat
 from feature_extraction import FeatureExtractor
 import re
-import pprint
-from booking import Booking
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
                   cat.MOBILITAETVERKEHR.name, cat.VERSICHERUNGEN.name,
                   cat.WOHNENHAUSHALT.name]
 
+
 class BookingClassifier:
     def __init__(self):
-        # Load model and features from disk
         client = MongoClient('mongodb://localhost:27017/')
         self.db = client.companyset
 
+        # Load model and features from disk
         # TODO use pipelining
         if Path('booking_classifier.pkl').is_file() and Path('booking_features.pkl'):
             print('loading model...')
@@ -34,6 +33,12 @@ class BookingClassifier:
             self._train_classifier()
 
     def match_creditor_id(self, booking):
+        """
+        Compares creditor id with entries in mongodb
+        :param booking: booking following BookingSchema in booking.py
+        :return: category if creditor exists in mongodb
+                 -1 if no entry was found
+        """
         try:
             regex = re.compile(booking.creditor_id, re.IGNORECASE)
             db_entry = self.db.companies.find_one({"creditorid": regex})
@@ -43,13 +48,14 @@ class BookingClassifier:
 
     def classify(self, booking):
         """
-        Classify examples and print prediction result
-        :param: booking as list of owner, text and usage
+        Classify booking and return prediction result
+        :param booking: booking following BookingSchema in booking.py
+        :return: category as string
         """
         # check if creditor_id is already known
         category = self.match_creditor_id(booking)
         if category != -1:
-            return category
+            return str(category), "0"
 
         # check if creditor_id is in purpose code
         wst = WhitespaceTokenizer()
@@ -67,14 +73,15 @@ class BookingClassifier:
         #category = self.clf.predict(example_counts)
 
         # if max prediction probability is less than 70% assume that the booking category is unknown
-        print(max(max(predict_probabilities)))
+        prob = str(max(max(predict_probabilities)))
+        print("P:" + str(prob))
         if max(max(predict_probabilities)) < 0.7:
             category = str(fbcat.SONSTIGES.name) # fallback category
         else:
             category = str(category_names[np.argmax(predict_probabilities)])
 
         print(category)
-        return str(category)
+        return str(category), prob
 
     def add_new_booking(self, booking):
         self._train_classifier()
@@ -84,13 +91,11 @@ class BookingClassifier:
         Train classifier and save to disk
         :return:
         """
-        # clf = MultinomialNB(fit_prior=False)
-        #clf = SGDClassifier(loss='hinge', alpha=0.001, max_iter=100)
-        clf = SVC(kernel='linear', C=10, decision_function_shape='ovr', probability=True)
-        #clf = SGDClassifier(loss='log', max_iter=100, tol=None, shuffle=True)
-        feature_extractor = FeatureExtractor.tfidf()
+        feature_extractor = FeatureExtractor.tfidf(ngram_range=(1, 2), max_df=0.5, use_idf=False,
+                                                   sublinear_tf=True)
+        clf = SVC(kernel='linear', C=100, gamma=0.01, decision_function_shape='ovo', probability=True)
 
-        counts, targets = feature_extractor.extract_features_from_csv
+        counts, targets = feature_extractor.extract_features_from_csv()
         print('start training...')
         clf.fit(counts, targets) # train the classifier
         print('training finished. start dumping model...')

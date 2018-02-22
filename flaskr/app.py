@@ -10,12 +10,15 @@ from flask.sessions import session_json_serializer, SecureCookieSessionInterface
 from itsdangerous import URLSafeTimedSerializer
 from hashlib import sha1
 from bson.objectid import ObjectId
+import json
+import ast
 
 app = Flask(__name__)
 app.secret_key = 'test123' #TODO secure
 classifier = BookingClassifier()
 file_handler = FileHandler()
 
+# TODO check MongoDB connection during startup
 app.config['MONGO_DBNAME'] = 'bookingset'
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/bookingset'
 mongo = PyMongo(app, config_prefix='MONGO')
@@ -40,20 +43,34 @@ def classifyterm():
 
 
 def categorize(req_data):
-    # schema validation and deserilization
+    req_data = ast.literal_eval(str(req_data))
+
+    if not req_data['booking_date']:
+        req_data['booking_date'] = None
+    if not req_data['valuta_date']:
+        req_data['valuta_date'] = None
+    if not req_data['creditor_id']:
+        req_data['creditor_id'] = None
+    if not req_data['iban']:
+        req_data['iban'] = None
+    if not req_data['bic']:
+        req_data['bic'] = None
+
+    # schema validation and deserialization
     try:
         booking_schema = BookingSchema()
         booking, errors = booking_schema.load(req_data)
+        #print(type(booking))
+        category, probability = classifier.classify(booking)
 
-        category = classifier.classify(booking)
-        print(category)
-        resp = well_form_category(category), 200
+        wf_category = well_form_category(category)
+        resp = wf_category, round(ast.literal_eval(probability), 4)*100
         if category == fbcat.SONSTIGES.name:
             print('unknown booking. saving to mongodb')
             # save booking temporarily to mongodb for feedback
             bookings = mongo.db.bookings
             booking_id = bookings.insert_one(req_data).inserted_id
-            # DBClient().add_booking(booking) #kontextwechsel
+            # DBClient().add_booking(booking) #ontextwechsel
             # save mongoid to session cookie
 
             session['value'] = str(booking_id)
@@ -65,31 +82,28 @@ def categorize(req_data):
     return resp
 
 
-@app.route("/classify", methods=['POST'])
-def classify():
-    return categorize(request.get_json())
+@app.route("/categorize", methods=['POST'])
+def classify_json():
+    cat, prob = categorize(request.get_json())
+    return render_template('result.html', category=cat, prob=prob)
 
 
 @app.route("/classifyform", methods=['POST'])
 def classify_inputform():
-    req_data = {'booking_date': request.form['booking_date'],
-                'valuta_date': request.form['valuta_date'],
-                'text': request.form['bookingtext'],
-                'usage': request.form['usage'],
-                'creditor_id': request.form['creditor_id'],
-                'owner': request.form['owner'],
-                'iban': request.form['iban'],
-                'bic': request.form['bic'],
-                'amount': request.form['amount']}
+    cat, prob = categorize(json.dumps(request.form))
+    return render_template('result.html', category=cat, prob=prob)
 
-    return categorize(req_data)
+
+@app.route("/inputform", methods=['GET'])
+def input_form():
+    return render_template('inputform.html'), 200
 
 
 @app.route("/correctbooking", methods=['POST'])
 def correct_booking():
-    req_data = request.get_json()
-    # schema validation and deserilization
+    req_data = request.get_json() # TODO use categorize method
 
+    # schema validation and deserilization
     try:
         booking_schema = BookingCatSchema()
         booking, errors = booking_schema.load(req_data)
@@ -101,7 +115,7 @@ def correct_booking():
         # Convert to object id
         booking_entry = bookings.find_one({"_id":ObjectId(session_data['value'])})
         #booking, errors = booking_schema.load(booking_entry)
-        print(booking)
+        #print(booking)
 
         # Insert booking to training set
         file_handler.write_csv(booking)
@@ -145,11 +159,6 @@ def feedback():
         if booking:
             add_booking(booking)
     return "Thanks for the feedback", 200
-
-
-@app.route("/inputform", methods=['GET'])
-def form():
-    return render_template('inputform.html'), 200
 
 
 def well_form_category(category):
