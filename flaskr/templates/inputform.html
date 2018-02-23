@@ -4,7 +4,7 @@
     {% if title %}
     <title>{{title}}</title>
     {% else %}
-    <title>Search</title>
+    <title>Booking Classifier</title>
     {% endif %}
   </head>
   <body>
@@ -12,31 +12,40 @@
         <form action="{{ url_for('classify_inputform') }}" method="post" name="classify">
             <fieldset>
                 <label for="booking_date">Buchungsdatum</label><br/>
-                <input type="text" name="booking_date" id="booking_date" maxlength="30">
+                <input type="text" name="booking_date" id="booking_date" maxlength="30"
+                value="01.09.2017" size="60">
                 <br/>
                 <label for="valuta_date">Valutadatum</label><br/>
-                <input type="text" name="valuta_date" id="valuta_date" maxlength="30">
+                <input type="text" name="valuta_date" id="valuta_date" maxlength="30"
+                value="01.09.2017" size="60">
                 <br/>
-                <label for="bookingtext">Buchungstext</label><br/>
-                <input type="text" name="bookingtext" id="bookingtext" maxlength="30">
+                <label for="text">Buchungstext*</label><br/>
+                <input type="text" name="text" id="text" maxlength="30"
+                value="FOLGELASTSCHRIFT" size="60" required>
                 <br/>
-                <label for="usage">Verwendungszweck</label><br/>
-                <input type="text" name="usage" id="usage" maxlength="30">
+                <label for="usage">Verwendungszweck*</label><br/>
+                <input type="text" name="usage" id="usage" maxlength="30"
+                value="KTO 12345678 Abschlag 40,00 EUR faellig 01.09.17 Musterstr. 1" size="60" required>
                 <br/>
                 <label for="creditor_id">Gläubiger-ID</label><br/>
-                <input type="text" name="creditor_id" id="creditor_id" maxlength="30">
+                <input type="text" name="creditor_id" id="creditor_id" maxlength="30"
+                value="DE05NAG00000005699" size="60">
                 <br/>
-                <label for="owner">Zahlungsempfänger</label><br/>
-                <input type="text" name="owner" id="owner" maxlength="30">
+                <label for="owner">Zahlungsempfänger*</label><br/>
+                <input type="text" name="owner" id="owner" maxlength="30"
+                value="N-Ergie Aktiengesellschaft" size="60" required>
                 <br/>
                 <label for="iban">IBAN</label><br/>
-                <input type="text" name="iban" id="iban" maxlength="30">
+                <input type="text" name="iban" id="iban" maxlength="30"
+                value="DE19700500000000055162" size="60">
                 <br/>
                 <label for="bic">BIC</label><br/>
-                <input type="text" name="bic" id="bic" maxlength="30">
+                <input type="text" name="bic" id="bic" maxlength="30"
+                value="BYLADEMMXXX" size="60">
                 <br/>
-                <label for="amount">Betrag</label><br/>
-                <input type="text" name="amount" id="amount" maxlength="30">
+                <label for="amount">Betrag*</label><br/>
+                <input type="text" name="amount" id="amount" maxlength="30"
+                value="-40.00" size="60" required>
                 <br/><br/>
                 <button type="submit">Absenden</button>
             </fieldset>
