@@ -1,6 +1,6 @@
 """
-Compare different classifiers for booking classification
-Model selection and hyperparameter estimation for prototype system
+- Compares different classifiers for booking classification
+- Model selection for prototype system
 """
 from pprint import pprint
 from time import time

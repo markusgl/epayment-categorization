@@ -1,22 +1,7 @@
-import string
-
-from nltk.corpus import stopwords as sw
-from nltk.corpus import wordnet as wn
-from nltk import wordpunct_tokenize
+from nltk import WordNetLemmatizer
 from nltk import word_tokenize
-from nltk import WordNetLemmatizer, StanfordSegmenter, PorterStemmer, RegexpStemmer, LancasterStemmer
-from nltk.stem import SnowballStemmer
-from nltk.tokenize import TreebankWordTokenizer, WordPunctTokenizer, WhitespaceTokenizer, \
-     RegexpTokenizer, SpaceTokenizer
-
-from nltk import sent_tokenize
-from nltk import pos_tag
-import nltk
 from sklearn.base import BaseEstimator, TransformerMixin
-import random
-import re
-import spacy
-from preprocessing.classifier_based_german_tagger import ClassifierBasedGermanTagger
+
 nastygrammer = '([/+]|\s{3,})' #regex
 
 

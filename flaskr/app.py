@@ -61,13 +61,16 @@ def categorize(req_data):
         booking_schema = BookingSchema()
         booking, errors = booking_schema.load(req_data)
         #print(type(booking))
-        category, probability = classifier.classify(booking)
+        category, probabilities = classifier.classify(booking)
 
         wf_category = well_form_category(category)
         #resp = wf_category, round(ast.literal_eval(probability), 4)*100
 
+        #resp = render_template('result.html', category=wf_category,
+        #                       prob=round(ast.literal_eval(probability), 4)*100)
         resp = render_template('result.html', category=wf_category,
-                               prob=round(ast.literal_eval(probability), 4)*100)
+                               data=probabilities,
+                               prob=round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100)
         if category == fbcat.SONSTIGES.name:
             print('unknown booking. saving to mongodb')
             # save booking temporarily to mongodb for feedback
@@ -78,9 +81,8 @@ def categorize(req_data):
 
             session['value'] = str(booking_id)
             resp = render_template('feedback.html', category=wf_category,
-                                   prob=round(ast.literal_eval(probability),
-                                              4) * 100)
-        # TODO if category sonstiges feedback
+                                   prob=round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100)
+
     except ValidationError as err:
         print(err.messages)
         resp = render_template('400.html'), 400

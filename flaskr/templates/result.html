@@ -6,6 +6,38 @@
 </head>
 <body>
     <p><b>Kategorie:</b> {{ category }}</p>
-    <p><b>Wahrscheinlichkeit:</b> {{ prob }} %</p>
+    <p><b>Wahrscheinlichkeit:</b> <b>{{ prob }}%</b></p>
+    <table border="black">
+        {% for result in data %}
+            <tr>
+                <td><b>Barentnahme:</b></td>
+                <td> {{ 100*result[0]|round(3, 'floor') }}%</td>
+            </tr>
+            <tr>
+                <td><b>Finanzen:</b></td>
+                <td> {{ 100*result[1]|round(3, 'floor')   }}%</td>
+            </tr>
+            <tr>
+                <td><b>Freizeit & Lifestyle:</b></td>
+                <td>{{ 100*result[2]|round(3, 'floor')  }}%</td>
+            </tr>
+            <tr>
+                <td><b>Lebenshaltung:</b></td>
+                <td>{{ 100*result[3]|round(3, 'floor')  }}%</td>
+            </tr><br/>
+            <tr>
+                <td><b>Mobilität & Verkehrsmittel:</b></td>
+                <td>{{ 100*result[4]|round(3, 'floor')  }}%</td>
+            </tr><br/>
+            <tr>
+                <td><b>Versicherungen:</b></td>
+                <td>{{ 100*result[5]|round(3, 'floor')  }}%</td>
+            </tr><br/>
+            <tr>
+                <td><b>Wohnen & Haushalt:</b></td>
+                <td>{{ 100*result[6]|round(3, 'floor')  }}%</td>
+            </tr><br/>
+        {% endfor %}
+    </table>
 </body>
 </html>

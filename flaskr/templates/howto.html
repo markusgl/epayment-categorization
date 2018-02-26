@@ -7,28 +7,30 @@
 <body>
     {% block content %}
 
-   <table style="width:100%">
+   <table style="width:100%" border="black">
       <tr>
         <th>path</th>
         <th>content</th>
       </tr>
       <tr>
         <td>http://127.0.0.1:5000/categorize</td>
-        <td> {
-            'category':' ',
-            'booking_date':' ',
-            'valuta_date':' ',
-            'text':' ',
-            'usage':' ',
-            'creditor_id':' ',
-            'owner':' ',
-            'iban':' ',
-            'bic':' ',
-            'amount':' '
-        }</td>
+        <td> Categorizes a JSON formatted booking in following format:
+            <br/><br/>
+            {<br/>
+            "booking_date":" ",<br/>
+            "valuta_date":" ",<br/>
+            "text":" ",<br/>
+            "usage":" ",<br/>
+            "creditor_id":" ",<br/>
+            "owner":" ",<br/>
+            "iban":" ",<br/>
+            "bic":" ",<br/>
+            "amount':" "<br/>
+            }
+        </td>
       </tr>
       <tr>
-        <td><a href="http://127.0.0.1:5000/inputform">Eingabeformular</a></td>
+        <td><a href="http://127.0.0.1:5000/inputform">http://127.0.0.1:5000/inputform</a></td>
         <td>Hier kann einen Transaktion manuell eingegben werden.</td>
       </tr>
     </table>

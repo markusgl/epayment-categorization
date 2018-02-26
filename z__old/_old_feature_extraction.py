@@ -1,17 +1,13 @@
 import os
+
 import numpy as np
 import pandas
-from pandas import DataFrame
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from categories import Categories as cat
-from preprocessing.nltk_preprocessor import NLTKPreprocessor
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
-import string
-import nltk
-import re
-from booking import Booking
-import scipy as sp
+from pandas import DataFrame
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+
+from categories import Categories as cat
 
 #nltk.download('wordnet')
 #nltk.download('punkt')
