@@ -149,6 +149,7 @@ def add_booking(booking_req=None):
     else:
         # Insert new booking into CSV
         file_handler.write_csv(booking)
+        classifier.train_classifier()
 
     return "booking added", 200
 

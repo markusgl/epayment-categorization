@@ -42,7 +42,7 @@ class FeatureExtractor:
         only columns category, bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
-        df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
+        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
 
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \

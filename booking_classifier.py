@@ -28,7 +28,7 @@ class BookingClassifier:
             self.feature_extractor = joblib.load('booking_features.pkl')
         else:
             print('No model found. Start training classifier...')
-            self._train_classifier()
+            self.train_classifier()
 
     def match_creditor_id(self, booking):
         """
@@ -85,9 +85,9 @@ class BookingClassifier:
         return str(category), predict_probabilities
 
     def add_new_booking(self, booking):
-        self._train_classifier()
+        self.train_classifier()
 
-    def _train_classifier(self):
+    def train_classifier(self):
         """
         Train classifier and save to disk
         :return:
