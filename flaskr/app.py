@@ -14,7 +14,7 @@ import json
 import ast
 
 app = Flask(__name__)
-app.secret_key = 'test123' #TODO secure
+app.secret_key = 'test123' #TODO secure for production environment
 classifier = BookingClassifier()
 file_handler = FileHandler()
 
@@ -63,19 +63,23 @@ def categorize(req_data):
         category, probabilities = classifier.classify(booking)
 
         wf_category = well_formed_category(category)
-        #resp = wf_category, round(ast.literal_eval(probability), 4)*100
-        #resp = render_template('result.html', category=wf_category,
-        #                       prob=round(ast.literal_eval(probability), 4)*100)
-        resp = render_template('result.html', category=wf_category,
-                               data=probabilities,
-                               prob=round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100)
+
+        print(type(probabilities))
+        # if creditor id was found in mongodb probability is 0
+        if probabilities == '0':
+            resp = render_template('result.html', category=wf_category,
+                                   prob='n/a')
+        else:
+            resp = render_template('result.html', category=wf_category,
+                                   data=probabilities,
+                                   prob=round(ast.literal_eval(
+                                       str(max(max(probabilities)))), 4) * 100)
         if category == fbcat.SONSTIGES.name:
             print('unknown booking. saving to mongodb')
             # save booking temporarily to mongodb for feedback
             bookings = mongo.db.bookings
             booking_id = bookings.insert_one(req_data).inserted_id
             # save mongoid to session cookie
-
             session['value'] = str(booking_id)
             resp = render_template('feedback.html', category=wf_category,
                                    prob=round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100)
@@ -104,7 +108,7 @@ def input_form():
 
 @app.route("/correctbooking", methods=['POST'])
 def correct_booking():
-    req_data = request.get_json() # TODO use categorize method
+    req_data = request.get_json()
 
     # schema validation and deserilization
     try:
@@ -132,10 +136,13 @@ def correct_booking():
 
 
 @app.route("/addbooking", methods=['POST'])
-def add_booking():
-    req_data = request.get_json()
+def add_booking(booking_req=None):
     booking_schema = BookingSchema()
-    booking, errors = booking_schema.load(req_data)
+    if booking_req:
+        booking, errors = booking_schema.load(booking_req)
+    else:
+        req_data = request.get_json()
+        booking, errors = booking_schema.load(req_data)
     if errors:
         print(errors)
         return render_template('404.html'), 404
@@ -149,7 +156,6 @@ def add_booking():
 @app.route("/feedback", methods=['POST'])
 def feedback():
     booking_id = session['value']
-    #req_data = request.get_json()
     req_data = json.dumps(request.form)
     print(type(req_data))
     req_data = ast.literal_eval(str(req_data))
@@ -163,7 +169,7 @@ def feedback():
         if booking:
             print(booking)
             add_booking(booking)
-    return "Thanks for the feedback", 200
+    return "Feedback sent", 200
 
 
 def well_formed_category(category):
