@@ -1,5 +1,10 @@
 # epayment categorization
 
-Comparison of different classifier algorithms to use for SEPA epayment classification (aka categorization)
+Package comparison:
+- comparision of different classifier algorithms
+- hyperparameter estimation with grid search
+- plotter for plotting confusion matrix
 
-further information coming soon
+Package flaskr:
+
+REST-API and templates

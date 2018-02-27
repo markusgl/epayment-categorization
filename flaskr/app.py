@@ -60,12 +60,10 @@ def categorize(req_data):
     try:
         booking_schema = BookingSchema()
         booking, errors = booking_schema.load(req_data)
-        #print(type(booking))
         category, probabilities = classifier.classify(booking)
 
-        wf_category = well_form_category(category)
+        wf_category = well_formed_category(category)
         #resp = wf_category, round(ast.literal_eval(probability), 4)*100
-
         #resp = render_template('result.html', category=wf_category,
         #                       prob=round(ast.literal_eval(probability), 4)*100)
         resp = render_template('result.html', category=wf_category,
@@ -76,7 +74,6 @@ def categorize(req_data):
             # save booking temporarily to mongodb for feedback
             bookings = mongo.db.bookings
             booking_id = bookings.insert_one(req_data).inserted_id
-            # DBClient().add_booking(booking) # Kontextwechsel
             # save mongoid to session cookie
 
             session['value'] = str(booking_id)
@@ -146,9 +143,6 @@ def add_booking():
         # Insert new booking into CSV
         file_handler.write_csv(booking)
 
-    #bookings = mongo.db.bookings
-    #booking_id = bookings.insert_one(req_data).inserted_id
-    #DBClient().add_booking(booking)
     return "booking added", 200
 
 
@@ -168,11 +162,11 @@ def feedback():
 
         if booking:
             print(booking)
-            #add_booking(booking)
+            add_booking(booking)
     return "Thanks for the feedback", 200
 
 
-def well_form_category(category):
+def well_formed_category(category):
     if category.upper() == cat.BARENTNAHME.name:
         return 'Barentnahme'
     elif category.upper() == cat.FINANZEN.name:
@@ -191,6 +185,5 @@ def well_form_category(category):
         return 'Sonstiges'
 
 if __name__ == '__main__':
-    #app.session_interface = ItsdangerousSessionInterface()
     app.session_interface = SecureCookieSessionInterface()
     app.run(debug=True)
