@@ -1,38 +1,21 @@
 """
-Compare different classifiers for booking classification
-Model selection and hyperparameter estimation for prototype system
+- Compares different classifiers for booking classification
+- Model selection for prototype system
 """
-from pprint import pprint
-from time import time
 
 import numpy as np
-from sklearn import tree, svm, metrics
-from sklearn.datasets import fetch_20newsgroups
-#from sklearn_evaluation import plot
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from sklearn.learning_curve import validation_curve
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import confusion_matrix, classification_report, \
-    accuracy_score, \
-    f1_score, precision_score, recall_score, average_precision_score, \
-    precision_recall_curve, jaccard_similarity_score
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, \
-    cross_validate, cross_val_predict, LeaveOneOut, StratifiedKFold
-#from sklearn.cross_validation import KFold
+from sklearn.metrics import confusion_matrix,  accuracy_score, \
+    f1_score, precision_score, recall_score
+from sklearn.model_selection import StratifiedKFold
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.svm import SVC
 from categories import Categories as cat
 from comparison.plotter import Plotter
 from feature_extraction import FeatureExtractor
-import matplotlib.pyplot as plt
-from sklearn.decomposition import pca, TruncatedSVD, PCA
-from sklearn.preprocessing import Normalizer, label_binarize, StandardScaler
 from collections import Counter
-from nltk.tokenize import WhitespaceTokenizer
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
@@ -104,7 +87,7 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
                                                    ngram_range=(1, 1)).extract_features_from_csv
             clf = KNeighborsClassifier(weights='distance', n_neighbors=2,
                                        leaf_size=20, algorithm='auto')
-        else: #TODO
+        else:
             vectorizer_title = 'TF-IDF'
             counts, targets = FeatureExtractor.tfidf(analyzer='word',
                                                      max_df=0.5,
@@ -122,12 +105,16 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
                                                      ngram_range=(1, 2)).extract_features_from_csv
             clf = SVC(kernel='sigmoid', C=100, gamma=0.01,
                       decision_function_shape='ovo', probability=True)
-        else: #TODO
+        else:
             vectorizer_title = 'TF-IDF'
-            counts, targets = FeatureExtractor.tfidf(ngram_range=(1, 2), max_df=0.5, use_idf=False,
+            counts, targets = FeatureExtractor.tfidf(analyzer='char',
+                                                     max_df=1.0,
+                                                     ngram_range=(1, 4),
+                                                     norm='l2',
+                                                     use_idf=False,
                                                      sublinear_tf=True).extract_features_from_csv
 
-            clf = SVC(kernel='linear', C=100, gamma=0.01, decision_function_shape='ovo', probability=True)
+            clf = SVC(kernel='sigmoid', C=10, gamma=1.4, decision_function_shape='ovo', probability=True)
     elif svm_sgd:
         clf_title = 'SVM (SGD)'
         if bow:
@@ -139,7 +126,7 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
                 target_ints.append(category_names_reverse.index(target))
             class_weights = get_classweight(targets)
             clf = SGDClassifier(loss='squared_hinge', penalty='l1', alpha=1e-05, max_iter=100, tol=0.2, class_weight=class_weights)
-        else: #TODO
+        else:
             vectorizer_title = 'TF-IDF'
             counts, targets = FeatureExtractor.tfidf(ngram_range=(1, 4), max_df=0.25, use_idf=False,
                                                      sublinear_tf=True).extract_features_from_csv
@@ -148,22 +135,9 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
                 target_ints.append(category_names_reverse.index(target))
             class_weights = get_classweight(targets)
             clf = SGDClassifier(loss='hinge', penalty='l1', alpha=1e-05, max_iter=100, tol=0.2, class_weight=class_weights)
-
-    elif decision_tree:
-        clf = tree.DecisionTreeClassifier()
-        clf_title = 'Decision Tree'
-    elif logistic_regression:
-        clf = SGDClassifier(loss='log')
-        clf_title = 'Logistic Regression'
-    elif random_forest:
-        clf = RandomForestClassifier()
-        clf_title = 'Random Forest'
     else:
         print('Please provide a classifer algorithm')
         return
-
-    # split data into test and training set - hold 20% out for testing
-    #X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=0)
 
     clf.fit(counts, targets)
 
@@ -176,9 +150,6 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
     prec_scores = []
     rec_scores = []
 
-    #kf = KFold(n_splits=15, random_state=1)
-    #kf = StratifiedKFold(y=targets, n_folds=15, random_state=1)
-
     confusion = np.array([[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
@@ -186,8 +157,6 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
     cv = list(StratifiedKFold(n_splits=15, random_state=1).split(counts, targets))
 
     for k, (train_indices, test_indices) in enumerate(cv):
-    #for k, (train_indices, test_indices) in enumerate(kf):
-    #for k, (train_indices, test_indices) in kf.split(targets):
         train_text = counts[train_indices]
         train_y = targets[train_indices]
 
@@ -204,8 +173,6 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
         prec_scores.append(precision_score(test_y, predictions, average="macro"))
         rec_scores.append(recall_score(test_y, predictions, average="macro"))
 
-        #print(classification_report(test_y, predictions, target_names=targets))
-
     print("---------------------- \nResults for ", clf_title, " with ", vectorizer_title, ":")
     print("K-Folds Accuracy-score: ", sum(ac_scores)/len(ac_scores))
     print("K-Folds F1-score: ", sum(f1_scores)/len(f1_scores))
@@ -213,16 +180,6 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
     print("K-Folds Recall-score: ", sum(rec_scores)/len(rec_scores))
 
     print("CV accuracy : %.3f +/- %.3f" % (np.mean(ac_scores), np.std(ac_scores)))
-
-    #scores = cross_val_score(clf, counts, targets, cv=10, scoring='accuracy')
-    #predicted = cross_val_predict(clf, counts, targets, cv=10)
-    #print(metrics.accuracy_score(targets, predicted))
-    #scores = cross_val_score(clf, counts, targets, cv=10, scoring='f1_macro')
-    #print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-
-    # confusion matrix train test split
-    #confusion += confusion_matrix(y_test, predictions)
-    #print(confusion)
 
     labels = ['Barent.', 'Finanzen', 'Freiz.&Lifes.', 'Lebensh.',
               'Mob.&Verk.', 'Versich.', 'Wohn.&Haus.']
@@ -233,18 +190,5 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
                                               title=clf_title,
                                               save=True)
 
-
-def estimate_jaccard_similarity():
-    counts, targets = FeatureExtractor.tfidf(ngram_range=(1, 1), max_df=0.5, use_idf=True,
-                                       sublinear_tf=True).extract_features_from_csv
-    clf = SGDClassifier(loss='modified_huber', penalty='elasticnet', alpha=0.001, max_iter=1000, tol=0.2)
-    X_train, X_test, y_train, y_test = train_test_split(counts, targets, test_size=0.2, random_state=0)
-
-    #clf.fit(counts, targets)
-    clf.fit(X_train, y_train)
-
-    print("Jaccard %.3f" % jaccard_similarity_score(y_test, clf.predict(X_test)))
-
-
-#classify(svm_sgd=True)
+#classify(support_vm=True)
 #estimate_jaccard_similarity()

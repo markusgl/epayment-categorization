@@ -74,14 +74,15 @@ class BookingClassifier:
         prob = str(max(max(predict_probabilities)))
         print("P:" + str(prob))
         print("Highest ranked category: " + str(category_names[np.argmax(predict_probabilities)]))
-
+        print(prob)
+        print(predict_probabilities)
         if max(max(predict_probabilities)) < 0.7:
             category = str(fbcat.SONSTIGES.name)  # fallback category
         else:
             category = str(category_names[np.argmax(predict_probabilities)])
 
         print(category)
-        return str(category), prob
+        return str(category), predict_probabilities
 
     def add_new_booking(self, booking):
         self._train_classifier()

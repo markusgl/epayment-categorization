@@ -1,19 +1,12 @@
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from categories import Categories as cat
 from nltk import word_tokenize
-from nltk.stem import WordNetLemmatizer, SnowballStemmer
-import string
+from nltk.stem import SnowballStemmer
 import nltk
-import re
-from booking import Booking
-import scipy as sp
 from file_handling.file_handler import FileHandler
 import editdistance
-import pandas as pd
 
-#nltk.download('wordnet')
-#nltk.download('punkt')
+nltk.download('punkt')
 nltk.download('stopwords')
 disturb_chars = '([\/+]|\s{3,})' #regex
 
@@ -49,43 +42,26 @@ class FeatureExtractor:
         only columns category, bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
-        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
-        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions.csv')
-        #df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
-
+        df = self.file_handler.read_csv('C:/Users/MG/OneDrive/Datasets/Labeled_transactions.csv')
 
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.owner.str.replace(disturb_chars, ' ').str.lower()
-        """
-        df['values'] = df[['bookingtext', 'usage', 'owner']].astype(str)\
-                                                            .sum(axis=1)\
-                                                            .replace(disturb_chars, ' ')\
-                                                            .str.lower()
-        
-        df['values'] = df.bookingtext + ' ' + df.usage + ' ' + df.owner
-        df['values'] = df[['values']].astype(str).sum(axis=1)\
-                                   .replace(disturb_chars, ' ').str.lower()
-        """
-        targets = df['category'].values
 
+        targets = df['category'].values
         # create term-document matrix
         word_counts = self.vectorizer.fit_transform(df['values'].values.astype(str)).astype(float)
-        #word_counts = sp.hstack(text.apply(lambda col: self.vectorizer.fit_transform(col.values.astype(str)).astype(float)))
 
         return word_counts, targets
 
     def extract_termlist_features(self, term_list):
         term_list = term_list.replace(disturb_chars, ' ').lower()
-        #print([' '.join(term_list[0:3])])
-        #word_counts = self.vectorizer.transform([' '.join(term_list[0:3])]).astype(float)
         word_counts = self.vectorizer.transform([term_list]).astype(float)
 
         return word_counts
 
     def fetch_data(self):
         df = self.file_handler.read_csv('C:/tmp/Labeled_transactions_sorted_same_class_amount.csv')
-        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_sorted_same_class_amount.csv')
 
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
@@ -107,37 +83,9 @@ class FeatureExtractor:
 
         return df['values'], df['category'].values
 
-    def get_jaccard_coef(self):
-        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
-        """
-        df['values'] = df[['bookingtext', 'usage', 'owner']].astype(str)\
-                                                            .sum(axis=1)\
-                                                            .replace(disturb_chars, ' ')\
-                                                            .str.lower()
-        """
-        df['values'] = df.bookingtext.str.replace(disturb_chars,
-                                                  ' ').str.lower() + \
-                       ' ' + df.usage.str.replace(disturb_chars,
-                                                  ' ').str.lower() + \
-                       ' ' + df.owner.str.replace(disturb_chars,
-                                               ' ').str.lower()
-
-        sum = 0
-        count = 0
-        for index, row in df['values'].iteritems():
-            for index, row2 in df['values'].iteritems():
-                a = set(row)
-                b = set(row2)
-
-                c = a.intersection(b)
-                count += 1
-                sum += float(len(c)) / (len(a) + len(b) - len(c))
-
-        print(sum / count)
-
     def get_levenshtein(self):
-        #df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_mobilitaet.csv')
-        df = self.file_handler.read_csv('/Users/mgl/Documents/OneDrive/Datasets/Labeled_transactions_versicherungen.csv')
+        #df = self.file_handler.read_csv('C:/tmp/Labeled_transactions_mobilitaet.csv')
+        df = self.file_handler.read_csv('C:/tmp/Labeled_transactions_versicherungen.csv')
 
         df['values'] = df.bookingtext.str.replace(disturb_chars,
                                                   ' ').str.lower() + \
@@ -153,9 +101,3 @@ class FeatureExtractor:
                 sum += editdistance.eval(row, row2)
 
         print(sum / count)
-
-#fe = FeatureExtractor.tfidf(ngram_range=(1, 1), max_df=0.5, use_idf=True, sublinear_tf=True)
-#fe.get_jaccard()
-#fe.jac_test()
-#fe.get_levenshtein()
-#print(editdistance.eval("text", "test"))
