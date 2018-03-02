@@ -22,7 +22,7 @@ class BookingClassifier:
 
         # Load model and features from disk
         # TODO use pipelining
-        if Path('booking_classifier.pkl').is_file() and Path('booking_features.pkl'):
+        if Path('booking_classifier.pkl').is_file() and Path('booking_features.pkl').is_file():
             print('loading model...')
             self.clf = joblib.load('booking_classifier.pkl')
             self.feature_extractor = joblib.load('booking_features.pkl')
@@ -96,7 +96,7 @@ class BookingClassifier:
                                                    sublinear_tf=True)
         clf = SVC(kernel='linear', C=100, gamma=0.01, decision_function_shape='ovo', probability=True)
 
-        counts, targets = feature_extractor.extract_features_from_csv()
+        counts, targets = feature_extractor.extract_features_from_csv
         print('start training...')
         clf.fit(counts, targets)  # train the classifier
         print('training finished. start dumping model...')
@@ -106,8 +106,3 @@ class BookingClassifier:
         joblib.dump(feature_extractor, 'booking_features.pkl')
 
 
-#clf = BookingClassifier()
-#clf._train_classifier()
-#examples = ['KARTENZAHLUNG', '2017-09-03T08:41:04 Karte1 2018-12', 'SUPOL NURNBERG AUSSERE BAYREUTHER STR']
-#examples = ['bli', 'bla', 'blub']
-#clf.classify(examples)

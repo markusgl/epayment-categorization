@@ -139,7 +139,8 @@ def correct_booking():
 def add_booking(booking_req=None):
     booking_schema = BookingSchema()
     if booking_req:
-        booking, errors = booking_schema.load(booking_req)
+        booking = booking_req
+        errors = None
     else:
         req_data = request.get_json()
         booking, errors = booking_schema.load(req_data)
@@ -158,17 +159,29 @@ def add_booking(booking_req=None):
 def feedback():
     booking_id = session['value']
     req_data = json.dumps(request.form)
-    print(type(req_data))
+    #print(type(req_data))
     req_data = ast.literal_eval(str(req_data))
     if 'category' in req_data:
-        category = req_data['category']
         bookings = mongo.db.bookings
-        booking_schema = BookingSchema()
-        print(booking_id)
-        booking = bookings.find_one({"_id": ObjectId(booking_id)})
+        #booking_schema = BookingSchema()
+        booking_entry = bookings.find_one({"_id": ObjectId(booking_id)})
+        booking = Booking()
+        #print(booking_entry)
+        booking.category = req_data['category']
+        booking.booking_date = booking_entry['booking_date']
+        booking.valuta_date = booking_entry['valuta_date']
+        booking.text = booking_entry['text']
+        booking.usage = booking_entry['usage']
+        booking.creditor_id = booking_entry['creditor_id']
+        booking.owner = booking_entry['owner']
+        booking.receiver_iban = booking_entry['iban']
+        booking.receiver_bic = booking_entry['bic']
+        booking.amount = booking_entry['amount']
+
+        #booking = booking_schema.loads(booking_entry)
 
         if booking:
-            print(booking)
+            #print(booking)
             add_booking(booking)
     return "Feedback sent", 200
 
