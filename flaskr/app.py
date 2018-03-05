@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, session
 from flask_pymongo import PyMongo
 from booking_classifier import BookingClassifier
-from booking import Booking, BookingSchema, BookingCatSchema
+from booking import Booking, BookingSchema
 from file_handling.file_handler import FileHandler
 from categories import FallbackCategorie as fbcat
 from categories import Categories as cat
@@ -12,16 +12,26 @@ from hashlib import sha1
 from bson.objectid import ObjectId
 import json
 import ast
+import pymongo
 
 app = Flask(__name__)
 app.secret_key = 'test123' #TODO secure for production environment
 classifier = BookingClassifier()
 file_handler = FileHandler()
 
-# TODO check MongoDB connection during startup
 app.config['MONGO_DBNAME'] = 'bookingset'
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/bookingset'
 mongo = PyMongo(app, config_prefix='MONGO')
+
+# check mongodb connection
+try:
+    maxSevSelDelay = 1
+    client = pymongo.MongoClient('mongodb://localhost:27017/bookingset',
+                                     serverSelectionTimeoutMS=maxSevSelDelay)
+    client.server_info()
+except pymongo.errors.ServerSelectionTimeoutError as err:
+    print("WARNING no mongodb connection available")
+
 
 s = URLSafeTimedSerializer(
     app.secret_key, salt='cookie-session',
@@ -106,6 +116,7 @@ def input_form():
     return render_template('inputform.html'), 200
 
 
+"""
 @app.route("/correctbooking", methods=['POST'])
 def correct_booking():
     req_data = request.get_json()
@@ -133,7 +144,7 @@ def correct_booking():
         resp = render_template('400.html'), 400
 
     return resp
-
+"""
 
 @app.route("/addbooking", methods=['POST'])
 def add_booking(booking_req=None):
@@ -144,12 +155,14 @@ def add_booking(booking_req=None):
     else:
         req_data = request.get_json()
         booking, errors = booking_schema.load(req_data)
+
     if errors:
         print(errors)
         return render_template('404.html'), 404
     else:
         # Insert new booking into CSV
         file_handler.write_csv(booking)
+        # train the classifier
         classifier.train_classifier()
 
     return "booking added", 200
@@ -163,10 +176,8 @@ def feedback():
     req_data = ast.literal_eval(str(req_data))
     if 'category' in req_data:
         bookings = mongo.db.bookings
-        #booking_schema = BookingSchema()
         booking_entry = bookings.find_one({"_id": ObjectId(booking_id)})
         booking = Booking()
-        #print(booking_entry)
         booking.category = req_data['category']
         booking.booking_date = booking_entry['booking_date']
         booking.valuta_date = booking_entry['valuta_date']
@@ -178,11 +189,12 @@ def feedback():
         booking.receiver_bic = booking_entry['bic']
         booking.amount = booking_entry['amount']
 
-        #booking = booking_schema.loads(booking_entry)
+        # delete booking from mongodb
+        bookings = mongo.db.bookings
+        bookings.delete_one({"_id": ObjectId(booking_id)})
 
         if booking:
-            #print(booking)
-            add_booking(booking)
+            add_booking(booking, booking_id)
     return "Feedback sent", 200
 
 
