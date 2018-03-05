@@ -16,7 +16,7 @@ import pymongo
 
 app = Flask(__name__)
 app.secret_key = 'test123' #TODO secure for production environment
-classifier = BookingClassifier()
+classifier = BookingClassifier(flaskr=True)
 file_handler = FileHandler()
 
 app.config['MONGO_DBNAME'] = 'bookingset'
@@ -49,7 +49,7 @@ def howto():
 @app.route("/classifyterm", methods=['POST']) # DEPRECATED
 def classifyterm():
     term = request.form['term']
-    return BookingClassifier.classify([term])
+    return classifier.classify([term])
 
 
 def categorize(req_data):
@@ -163,7 +163,7 @@ def add_booking(booking_req=None):
         # Insert new booking into CSV
         file_handler.write_csv(booking)
         # train the classifier
-        classifier.train_classifier()
+        classifier.train_classifier(flaskr=True)
 
     return "booking added", 200
 
@@ -172,7 +172,6 @@ def add_booking(booking_req=None):
 def feedback():
     booking_id = session['value']
     req_data = json.dumps(request.form)
-    #print(type(req_data))
     req_data = ast.literal_eval(str(req_data))
     if 'category' in req_data:
         bookings = mongo.db.bookings
@@ -194,7 +193,7 @@ def feedback():
         bookings.delete_one({"_id": ObjectId(booking_id)})
 
         if booking:
-            add_booking(booking, booking_id)
+            add_booking(booking)
     return "Feedback sent", 200
 
 

@@ -19,3 +19,4 @@ __pycache__/
 *.png
 *.conll09
 *.pkl
+*.csv
