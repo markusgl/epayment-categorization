@@ -57,19 +57,3 @@ class BookingCatSchema(Schema):
     def make_booking(self, data):
         return Booking(**data)
 
-"""
-req_data = {"booking_date": "", "valuta_date": "01.01.2018", "text": "kartenzahlung",
-            "usage": "Obi 123", "creditor_id": "", "owner": "Obi", "iban": "", "bic": "", "amount": "-10.00"}
-
-if not req_data['booking_date']:
-    req_data['booking_date'] = None
-if not req_data['valuta_date']:
-    req_data['valuta_date'] = None
-
-booking_schema = BookingSchema()
-booking, errors = booking_schema.load(req_data, partial=True)
-print(type(booking))
-#print(booking.to_array())
-"""
-
-

@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, session
 from flask_pymongo import PyMongo
 from booking_classifier import BookingClassifier
-from booking import Booking, BookingSchema, BookingCatSchema
+from booking import Booking, BookingSchema
 from file_handling.file_handler import FileHandler
 from categories import FallbackCategorie as fbcat
 from categories import Categories as cat
@@ -12,16 +12,26 @@ from hashlib import sha1
 from bson.objectid import ObjectId
 import json
 import ast
+import pymongo
 
 app = Flask(__name__)
-app.secret_key = 'test123' #TODO secure
+app.secret_key = 'test123' #TODO secure for production environment
 classifier = BookingClassifier()
 file_handler = FileHandler()
 
-# TODO check MongoDB connection during startup
 app.config['MONGO_DBNAME'] = 'bookingset'
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/bookingset'
 mongo = PyMongo(app, config_prefix='MONGO')
+
+# check mongodb connection
+try:
+    maxSevSelDelay = 1
+    client = pymongo.MongoClient('mongodb://localhost:27017/bookingset',
+                                     serverSelectionTimeoutMS=maxSevSelDelay)
+    client.server_info()
+except pymongo.errors.ServerSelectionTimeoutError as err:
+    print("WARNING no mongodb connection available")
+
 
 s = URLSafeTimedSerializer(
     app.secret_key, salt='cookie-session',
@@ -63,19 +73,23 @@ def categorize(req_data):
         category, probabilities = classifier.classify(booking)
 
         wf_category = well_formed_category(category)
-        #resp = wf_category, round(ast.literal_eval(probability), 4)*100
-        #resp = render_template('result.html', category=wf_category,
-        #                       prob=round(ast.literal_eval(probability), 4)*100)
-        resp = render_template('result.html', category=wf_category,
-                               data=probabilities,
-                               prob=round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100)
+
+        print(type(probabilities))
+        # if creditor id was found in mongodb probability is 0
+        if probabilities == '0':
+            resp = render_template('result.html', category=wf_category,
+                                   prob='n/a')
+        else:
+            resp = render_template('result.html', category=wf_category,
+                                   data=probabilities,
+                                   prob=round(ast.literal_eval(
+                                       str(max(max(probabilities)))), 4) * 100)
         if category == fbcat.SONSTIGES.name:
             print('unknown booking. saving to mongodb')
             # save booking temporarily to mongodb for feedback
             bookings = mongo.db.bookings
             booking_id = bookings.insert_one(req_data).inserted_id
             # save mongoid to session cookie
-
             session['value'] = str(booking_id)
             resp = render_template('feedback.html', category=wf_category,
                                    prob=round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100)
@@ -102,9 +116,10 @@ def input_form():
     return render_template('inputform.html'), 200
 
 
+"""
 @app.route("/correctbooking", methods=['POST'])
 def correct_booking():
-    req_data = request.get_json() # TODO use categorize method
+    req_data = request.get_json()
 
     # schema validation and deserilization
     try:
@@ -129,19 +144,26 @@ def correct_booking():
         resp = render_template('400.html'), 400
 
     return resp
-
+"""
 
 @app.route("/addbooking", methods=['POST'])
-def add_booking():
-    req_data = request.get_json()
+def add_booking(booking_req=None):
     booking_schema = BookingSchema()
-    booking, errors = booking_schema.load(req_data)
+    if booking_req:
+        booking = booking_req
+        errors = None
+    else:
+        req_data = request.get_json()
+        booking, errors = booking_schema.load(req_data)
+
     if errors:
         print(errors)
         return render_template('404.html'), 404
     else:
         # Insert new booking into CSV
         file_handler.write_csv(booking)
+        # train the classifier
+        classifier.train_classifier()
 
     return "booking added", 200
 
@@ -149,21 +171,31 @@ def add_booking():
 @app.route("/feedback", methods=['POST'])
 def feedback():
     booking_id = session['value']
-    #req_data = request.get_json()
     req_data = json.dumps(request.form)
-    print(type(req_data))
+    #print(type(req_data))
     req_data = ast.literal_eval(str(req_data))
     if 'category' in req_data:
-        category = req_data['category']
         bookings = mongo.db.bookings
-        booking_schema = BookingSchema()
-        print(booking_id)
-        booking = bookings.find_one({"_id": ObjectId(booking_id)})
+        booking_entry = bookings.find_one({"_id": ObjectId(booking_id)})
+        booking = Booking()
+        booking.category = req_data['category']
+        booking.booking_date = booking_entry['booking_date']
+        booking.valuta_date = booking_entry['valuta_date']
+        booking.text = booking_entry['text']
+        booking.usage = booking_entry['usage']
+        booking.creditor_id = booking_entry['creditor_id']
+        booking.owner = booking_entry['owner']
+        booking.receiver_iban = booking_entry['iban']
+        booking.receiver_bic = booking_entry['bic']
+        booking.amount = booking_entry['amount']
+
+        # delete booking from mongodb
+        bookings = mongo.db.bookings
+        bookings.delete_one({"_id": ObjectId(booking_id)})
 
         if booking:
-            print(booking)
-            add_booking(booking)
-    return "Thanks for the feedback", 200
+            add_booking(booking, booking_id)
+    return "Feedback sent", 200
 
 
 def well_formed_category(category):
