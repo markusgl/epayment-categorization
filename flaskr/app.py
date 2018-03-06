@@ -115,37 +115,6 @@ def classify_inputform():
 def input_form():
     return render_template('inputform.html'), 200
 
-
-"""
-@app.route("/correctbooking", methods=['POST'])
-def correct_booking():
-    req_data = request.get_json()
-
-    # schema validation and deserilization
-    try:
-        booking_schema = BookingCatSchema()
-        booking, errors = booking_schema.load(req_data)
-
-        session_data = s.loads(request.cookies.get('session'))
-        bookings = mongo.db.bookings
-        print(session_data['value'])
-
-        # Convert to object id
-        booking_entry = bookings.find_one({"_id":ObjectId(session_data['value'])})
-        #booking, errors = booking_schema.load(booking_entry)
-        #print(booking)
-
-        # Insert booking to training set
-        file_handler.write_csv(booking)
-
-        resp = 'ok', 200
-    except ValidationError as err:
-        print(err.messages)
-        resp = render_template('400.html'), 400
-
-    return resp
-"""
-
 @app.route("/addbooking", methods=['POST'])
 def add_booking(booking_req=None):
     booking_schema = BookingSchema()

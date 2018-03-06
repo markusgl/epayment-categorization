@@ -23,9 +23,9 @@ class BookingClassifier:
         # Load model and features from disk
         # TODO use pipelining
         if flaskr:
-            self.pickle_path = '../data/'
+            self.pickle_path = '../resources/'
         else:
-            self.pickle_path = 'data/'
+            self.pickle_path = 'resources/'
         if Path(self.pickle_path+'booking_classifier.pkl').is_file() and Path(self.pickle_path+'booking_features.pkl').is_file():
             print('loading model...')
             self.clf = joblib.load(Path(self.pickle_path+'booking_classifier.pkl'))
@@ -99,11 +99,7 @@ class BookingClassifier:
         feature_extractor = FeatureExtractor.tfidf(ngram_range=(1, 2), max_df=0.5, use_idf=False,
                                                    sublinear_tf=True)
         clf = SVC(kernel='linear', C=100, gamma=0.01, decision_function_shape='ovo', probability=True)
-
-        if flaskr:
-            counts, targets = feature_extractor.extract_features_from_csv_flask()
-        else:
-            counts, targets = feature_extractor.extract_features_from_csv
+        counts, targets = feature_extractor.extract_features_from_csv
 
         print('start training...')
         clf.fit(counts, targets)  # train the classifier
@@ -111,5 +107,5 @@ class BookingClassifier:
 
         # save model and classifier to disk
         joblib.dump(clf, self.pickle_path+'booking_classifier.pkl')
-        joblib.dump(feature_extractor, self.pickle_path+'data/booking_features.pkl')
+        joblib.dump(feature_extractor, self.pickle_path+'booking_features.pkl')
 

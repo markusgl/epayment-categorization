@@ -44,7 +44,7 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
              svm_sgd=False,
              decision_tree=False, random_forest=False, persist=False, logistic_regression=False):
     """
-    Validate the classifier against unseen data using k-fold cross validation
+    Validate the classifier against unseen resources using k-fold cross validation
     """
 
     if multinomial_nb:

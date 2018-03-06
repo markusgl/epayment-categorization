@@ -23,6 +23,8 @@ class Booking:
                 self.usage, self.creditor_id, self.owner,
                 self.receiver_iban, self.receiver_bic, self.amount]
 
+    def to_small_array(self):
+        return [self.category, self.text, self.usage, self.owner]
 
 class BookingSchema(Schema):
     category = fields.Str(required=False, allow_none=True)
