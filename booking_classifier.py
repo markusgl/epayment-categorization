@@ -16,16 +16,20 @@ category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
 
 
 class BookingClassifier:
-    def __init__(self):
+    def __init__(self, flaskr=None):
         client = MongoClient('mongodb://localhost:27017/')
         self.db = client.companyset
 
         # Load model and features from disk
         # TODO use pipelining
-        if Path('booking_classifier.pkl').is_file() and Path('booking_features.pkl').is_file():
+        if flaskr:
+            self.pickle_path = '../resources/'
+        else:
+            self.pickle_path = 'resources/'
+        if Path(self.pickle_path+'booking_classifier.pkl').is_file() and Path(self.pickle_path+'booking_features.pkl').is_file():
             print('loading model...')
-            self.clf = joblib.load('booking_classifier.pkl')
-            self.feature_extractor = joblib.load('booking_features.pkl')
+            self.clf = joblib.load(Path(self.pickle_path+'booking_classifier.pkl'))
+            self.feature_extractor = joblib.load(Path(self.pickle_path+'booking_features.pkl'))
         else:
             print('No model found. Start training classifier...')
             self.train_classifier()
@@ -87,7 +91,7 @@ class BookingClassifier:
     def add_new_booking(self, booking):
         self.train_classifier()
 
-    def train_classifier(self):
+    def train_classifier(self, flaskr=None):
         """
         Train classifier and save to disk
         :return:
@@ -95,14 +99,13 @@ class BookingClassifier:
         feature_extractor = FeatureExtractor.tfidf(ngram_range=(1, 2), max_df=0.5, use_idf=False,
                                                    sublinear_tf=True)
         clf = SVC(kernel='linear', C=100, gamma=0.01, decision_function_shape='ovo', probability=True)
-
         counts, targets = feature_extractor.extract_features_from_csv
+
         print('start training...')
         clf.fit(counts, targets)  # train the classifier
         print('training finished. start dumping model...')
 
         # save model and classifier to disk
-        joblib.dump(clf, 'booking_classifier.pkl')
-        joblib.dump(feature_extractor, 'booking_features.pkl')
-
+        joblib.dump(clf, self.pickle_path+'booking_classifier.pkl')
+        joblib.dump(feature_extractor, self.pickle_path+'booking_features.pkl')
 
