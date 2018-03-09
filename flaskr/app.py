@@ -74,7 +74,7 @@ def categorize(req_data):
 
         wf_category = well_formed_category(category)
 
-        print(type(probabilities))
+        #print(type(probabilities))
         # if creditor id was found in mongodb probability is 0
         if probabilities == '0':
             resp = render_template('result.html', category=wf_category,
@@ -132,7 +132,7 @@ def add_booking(booking_req=None):
         # Insert new booking into CSV
         file_handler.write_csv(booking)
         # train the classifier
-        classifier.train_classifier(flaskr=True)
+        classifier.train_classifier()
 
     return "booking added", 200
 
@@ -163,7 +163,7 @@ def feedback():
 
         if booking:
             add_booking(booking)
-    return "Feedback sent", 200
+    return render_template('/feedback_success.html'), 200
 
 
 def well_formed_category(category):
@@ -186,4 +186,4 @@ def well_formed_category(category):
 
 if __name__ == '__main__':
     app.session_interface = SecureCookieSessionInterface()
-    app.run(debug=True)
+    app.run()

@@ -8,12 +8,14 @@ from categories import Categories as cat
 from categories import FallbackCategorie as fbcat
 from feature_extraction import FeatureExtractor
 import re
+import os
 
 category_names = [cat.BARENTNAHME.name, cat.FINANZEN.name,
                   cat.FREIZEITLIFESTYLE.name, cat.LEBENSHALTUNG.name,
                   cat.MOBILITAETVERKEHR.name, cat.VERSICHERUNGEN.name,
                   cat.WOHNENHAUSHALT.name]
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class BookingClassifier:
     def __init__(self, flaskr=None):
@@ -22,14 +24,13 @@ class BookingClassifier:
 
         # Load model and features from disk
         # TODO use pipelining
-        if flaskr:
-            self.pickle_path = '../resources/'
-        else:
-            self.pickle_path = 'resources/'
-        if Path(self.pickle_path+'booking_classifier.pkl').is_file() and Path(self.pickle_path+'booking_features.pkl').is_file():
-            print('loading model...')
-            self.clf = joblib.load(Path(self.pickle_path+'booking_classifier.pkl'))
-            self.feature_extractor = joblib.load(Path(self.pickle_path+'booking_features.pkl'))
+        self.resource_path = str(ROOT_DIR + '/resources/')
+        #if flaskr:
+        #    self.pickle_path = '../resources/'
+        #else:
+        #    self.pickle_path = 'resources/'
+        if Path(self.resource_path + 'booking_classifier.pkl').is_file() and Path(self.resource_path + 'booking_features.pkl').is_file():
+            self.load_model()
         else:
             print('No model found. Start training classifier...')
             self.train_classifier()
@@ -76,22 +77,21 @@ class BookingClassifier:
 
         # if max prediction probability is less than 70% assume that the booking category is unknown
         prob = str(max(max(predict_probabilities)))
-        print("P:" + str(prob))
-        print("Highest ranked category: " + str(category_names[np.argmax(predict_probabilities)]))
-        print(prob)
-        print(predict_probabilities)
+        #print("P:" + str(prob))
+        #print("Highest ranked category: " + str(category_names[np.argmax(predict_probabilities)]))
+
         if max(max(predict_probabilities)) < 0.7:
             category = str(fbcat.SONSTIGES.name)  # fallback category
         else:
             category = str(category_names[np.argmax(predict_probabilities)])
 
-        print(category)
+        #print(category)
         return str(category), predict_probabilities
 
     def add_new_booking(self, booking):
         self.train_classifier()
 
-    def train_classifier(self, flaskr=None):
+    def train_classifier(self):
         """
         Train classifier and save to disk
         :return:
@@ -106,6 +106,12 @@ class BookingClassifier:
         print('training finished. start dumping model...')
 
         # save model and classifier to disk
-        joblib.dump(clf, self.pickle_path+'booking_classifier.pkl')
-        joblib.dump(feature_extractor, self.pickle_path+'booking_features.pkl')
+        joblib.dump(clf, self.resource_path + 'booking_classifier.pkl')
+        joblib.dump(feature_extractor, self.resource_path + 'booking_features.pkl')
+        self.load_model()
+
+    def load_model(self):
+        print('loading model...')
+        self.clf = joblib.load(Path(self.resource_path + 'booking_classifier.pkl'))
+        self.feature_extractor = joblib.load(Path(self.resource_path + 'booking_features.pkl'))
 
