@@ -8,7 +8,7 @@
         <p><b>Kategorie:</b> {{ category }}</p>
         <p><b>Wahrscheinlichkeit:</b> {{ prob }} %</p>
         <br>
-        <h2>Feedback:</h2>
+        <h2>Feedback: <h3>(Hinweis: Transaktion wird in den Trainigsdatensatz aufgenommen und permanent gespeichert.)</h3></h2>
         <form action="{{ url_for('feedback') }}" method="post">
           <select name="category">
             <option value="barentnahme">Barentnahme</option>

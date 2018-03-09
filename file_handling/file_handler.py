@@ -2,10 +2,13 @@
 
 import pandas
 import csv
+import pkg_resources
+import os
+import booking_classifier
 
 class FileHandler():
     def __init__(self):
-        self.filepath = '../resources/Labeled_transactions.csv'
+        self.filepath = str(booking_classifier.ROOT_DIR + '/resources/Labeled_transactions.csv')
 
     def read_csv(self, file):
         if file:
@@ -15,8 +18,8 @@ class FileHandler():
 
     def write_csv(self, booking):
         #booking_props = booking.to_array()
-        booking_props = booking.to_small_array()
+        #booking_props = booking.to_small_array()
         with open(self.filepath, 'a') as file:
-            writer = csv.writer(file)
-            # TODO check if linebreak already exists before adding one
-            writer.writerow(booking_props)
+            file.write('\n'+booking.category+','+booking.text+','+booking.usage+','+booking.owner)
+            #writer = csv.writer(file)
+            #writer.writerow(booking_props)

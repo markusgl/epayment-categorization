@@ -2,7 +2,6 @@
 
 from marshmallow import Schema, fields, post_load
 
-
 class Booking:
     def __init__(self, category=None, booking_date=None, valuta_date=None,
                  text=None, usage=None, creditor_id=None, owner=None,

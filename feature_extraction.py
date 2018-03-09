@@ -5,10 +5,7 @@ from nltk.stem import SnowballStemmer
 import nltk
 from file_handling.file_handler import FileHandler
 import editdistance
-from pathlib import Path
-import os
-import resources
-import pkg_resources
+import booking_classifier
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -46,11 +43,10 @@ class FeatureExtractor:
         only columns category, bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
-        resource_package = __name__
-        resource_path = '/'.join(('resources', 'Labeled_transactions.csv'))
-        data_csv = pkg_resources.resource_stream(resource_package, resource_path)
+        data_csv = str(booking_classifier.ROOT_DIR + '/resources/Labeled_transactions.csv')
 
-        df = self.file_handler.read_csv(data_csv.name)
+        df = self.file_handler.read_csv(data_csv)
+        df.dropna(how="all", inplace=True) # drop blank lines
 
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
@@ -70,7 +66,8 @@ class FeatureExtractor:
         return word_counts
 
     def fetch_data(self):
-        df = self.file_handler.read_csv('/resources/Labeled_transactions.csv')
+        #df = self.file_handler.read_csv('/resources/Labeled_transactions.csv')
+        df = self.file_handler.read_csv(str(booking_classifier.ROOT_DIR + '/resources/Labeled_transactions.csv'))
 
         df['values'] = df.bookingtext.str.replace(disturb_chars, ' ').str.lower() + \
                      ' ' + df.usage.str.replace(disturb_chars, ' ').str.lower() + \
@@ -94,7 +91,7 @@ class FeatureExtractor:
 
     def get_levenshtein(self):
         # TODO choose only transactions with same category
-        df = self.file_handler.read_csv('resources/Labeled_transactions.csv')
+        df = self.file_handler.read_csv('/resources/Labeled_transactions.csv')
 
         df['values'] = df.bookingtext.str.replace(disturb_chars,
                                                   ' ').str.lower() + \
