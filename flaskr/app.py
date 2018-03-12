@@ -52,7 +52,7 @@ def classifyterm():
     return classifier.classify([term])
 
 
-def categorize(req_data):
+def categorize_json(req_data):
     req_data = ast.literal_eval(str(req_data))
 
     if not req_data['booking_date']:
@@ -72,9 +72,49 @@ def categorize(req_data):
         booking, errors = booking_schema.load(req_data)
         category, probabilities = classifier.classify(booking)
 
+        # if creditor id was found in mongodb probability is 0
+        if probabilities == '0':
+            resp = {"category": category, "probability": "n/a"}
+        else:
+            print(round(max(max(probabilities))))
+            resp = {"category": category, "probability": round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100}
+        if category == fbcat.SONSTIGES.name:
+            print('unknown booking. saving to mongodb')
+            # save booking temporarily to mongodb for feedback
+            bookings = mongo.db.bookings
+            booking_id = bookings.insert_one(req_data).inserted_id
+            # save mongoid to session cookie
+            session['value'] = str(booking_id)
+            resp = {"category": category, "probability": round(ast.literal_eval(str(max(max(probabilities)))), 4) * 100}
+
+    except ValidationError as err:
+        print(err.messages)
+        resp = {"category": "", "probability": 0}
+
+    return resp
+
+
+def categorize_form(req_data):
+    req_data = ast.literal_eval(str(req_data))
+
+    if not req_data['booking_date']:
+        req_data['booking_date'] = None
+    if not req_data['valuta_date']:
+        req_data['valuta_date'] = None
+    if not req_data['creditor_id']:
+        req_data['creditor_id'] = None
+    if not req_data['iban']:
+        req_data['iban'] = None
+    if not req_data['bic']:
+        req_data['bic'] = None
+
+    # schema validation and deserialization
+    try:
+        booking_schema = BookingSchema()
+        booking, errors = booking_schema.load(req_data)
+        category, probabilities = classifier.classify(booking)
         wf_category = well_formed_category(category)
 
-        #print(type(probabilities))
         # if creditor id was found in mongodb probability is 0
         if probabilities == '0':
             resp = render_template('result.html', category=wf_category,
@@ -103,12 +143,12 @@ def categorize(req_data):
 
 @app.route("/categorize", methods=['POST'])
 def classify_json():
-    return categorize(request.get_json())
+    return json.dumps(categorize_json(request.get_json()))
 
 
 @app.route("/classifyform", methods=['POST'])
 def classify_inputform():
-    return categorize(json.dumps(request.form))
+    return categorize_form(json.dumps(request.form))
 
 
 @app.route("/inputform", methods=['GET'])
