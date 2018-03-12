@@ -9,13 +9,19 @@
 
    <table style="width:100%" border="black">
       <tr>
-        <th>path</th>
-        <th>content</th>
+        <th>Path</th>
+        <th>Beschreibung</th>
       </tr>
       <tr>
         <td>/categorize</td>
-        <td> Categorizes a JSON formatted booking in following format:
+        <td>
+            <br/>
+            Kategorisiert eine Transaktion, welche via HTTP-POST im JSON Format gesendet wird.
             <br/><br/>
+            Folgendes Format muss genutzt werden, wobei <i>text</i>, <i>usage</i>, <i>owner</i> und <i>amount</i>
+            Pflichtfelder sind:
+            <br/><br/>
+            <i>
             {<br/>
             "booking_date":" ",<br/>
             "valuta_date":" ",<br/>
@@ -26,12 +32,26 @@
             "iban":" ",<br/>
             "bic":" ",<br/>
             "amount':" "<br/>
+            }</i>
+            <br/><br/>
+            Die Antwort wird in folgendem Format geliefert:<br/>
+            <i>
+            {<br/>
+                "category": "",<br/>
+                "probability":<br/>
             }
+            </i>
+            <br/><br/>
         </td>
       </tr>
       <tr>
         <td><a href="/inputform">/inputform</a></td>
-        <td>Hier kann einen Transaktion manuell eingegben werden.</td>
+        <td>
+            <br/>
+            <b>Eingabeformular</b><br/>
+            Hier kann eine Transaktion manuell eingegben werden.
+            <br/><br/>
+        </td>
       </tr>
     </table>
     {% endblock %}
