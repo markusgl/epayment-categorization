@@ -3,6 +3,7 @@
 ### Description
 This is an approach to automatically classify SEPA-Bookings to one of seven predefined classes.
 The booking-classifier uses a Support Vector Machine that was trained on a set of several bookings.
+
 **Note**: the words 'classify' and 'categorize' are use synonymously below. 
 
 Also part of this project is a 'comparison'-package which compares the performance of 
