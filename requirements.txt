@@ -1,0 +1,13 @@
+numpy
+sklearn
+matplotlib
+pandas
+nltk
+flask
+flask_pymongo
+werkzeug
+marshmallow
+itsdangerous
+bson
+pymongo
+editdistance
