@@ -1,6 +1,6 @@
 # epayment categorization
 
-####Description
+#### Description
 This is an approach to automatically classify SEPA-Bookings to one of seven predefined classes.
 The booking-classifier uses a Support Vector Machine that was trained on a set of several bookings.
 Note: the words 'classify' and 'categorize' are use synonymously below. 
@@ -23,7 +23,7 @@ flaskr:
 resources:
 - ML model and extracted features
 
-####Run the classifier
+#### Run the classifier
 To start the booking classifier simply start the 'flaskr/app' module.
 The API offers following routes:
 
