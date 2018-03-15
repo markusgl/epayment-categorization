@@ -2,6 +2,7 @@ numpy
 sklearn
 matplotlib
 pandas
+scipy
 nltk
 flask
 flask_pymongo
