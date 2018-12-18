@@ -39,7 +39,8 @@ class FeatureExtractor:
     def extract_features_from_csv(self):
         """
         builds a pandas resources frame from csv file (semicolon separated)
-        only columns category, bookingtext, usage and owner are necessary
+        only columns category,
+        bookingtext, usage and owner are necessary
         :return: word counts, targets
         """
         data_csv = str(booking_classifier.ROOT_DIR + '/resources/Labeled_transactions.csv')

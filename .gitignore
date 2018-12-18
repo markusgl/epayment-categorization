@@ -19,3 +19,7 @@ __pycache__/
 *.png
 *.conll09
 *.csv
+
+
+# models
+*.pkl
