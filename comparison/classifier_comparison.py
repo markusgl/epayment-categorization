@@ -165,7 +165,8 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
 
         clf.fit(train_text, train_y)
         predictions = clf.predict(test_text)
-
+        print(test_y)
+        print(predictions)
         confusion += confusion_matrix(test_y, predictions)
 
         ac_scores.append(accuracy_score(test_y, predictions))
@@ -190,5 +191,5 @@ def classify(bow=False, plot=False, multinomial_nb=False, bernoulli_nb=False, kn
                                               title=clf_title,
                                               save=True)
 
-#classify(support_vm=True)
+classify(support_vm=True)
 #estimate_jaccard_similarity()
